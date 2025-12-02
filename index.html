@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SeaLearn</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      body { font-family: 'Inter', sans-serif; }
+
+      /* Default Blue Theme */
+      :root {
+        --theme-primary: #2563eb;       /* blue-600 */
+        --theme-primary-hover: #1d4ed8; /* blue-700 */
+        --theme-secondary: #4f46e5;     /* indigo-600 */
+        --theme-secondary-hover: #4338ca; /* indigo-700 */
+        --theme-ring: #3b82f6;          /* blue-500 */
+        --theme-soft: #eff6ff;          /* blue-50 */
+        --theme-text: #1e40af;          /* blue-800 */
+        
+        --theme-sidebar: #0f172a;       /* slate-900 */
+        --theme-sidebar-hover: #1e293b; /* slate-800 */
+        --theme-sidebar-text: #94a3b8;  /* slate-400 */
+      }
+
+      .theme-teal {
+        --theme-primary: #0d9488;       /* teal-600 */
+        --theme-primary-hover: #0f766e; /* teal-700 */
+        --theme-secondary: #059669;     /* emerald-600 */
+        --theme-secondary-hover: #047857; /* emerald-700 */
+        --theme-ring: #14b8a6;          /* teal-500 */
+        --theme-soft: #f0fdfa;          /* teal-50 */
+        --theme-text: #115e59;          /* teal-800 */
+
+        --theme-sidebar: #042f2e;       /* teal-950 */
+        --theme-sidebar-hover: #115e59; /* teal-800 */
+        --theme-sidebar-text: #ccfbf1;  /* teal-100 */
+      }
+
+      .theme-violet {
+        --theme-primary: #7c3aed;       /* violet-600 */
+        --theme-primary-hover: #6d28d9; /* violet-700 */
+        --theme-secondary: #c026d3;     /* fuchsia-600 */
+        --theme-secondary-hover: #a21caf; /* fuchsia-700 */
+        --theme-ring: #8b5cf6;          /* violet-500 */
+        --theme-soft: #f5f3ff;          /* violet-50 */
+        --theme-text: #5b21b6;          /* violet-800 */
+
+        --theme-sidebar: #2e1065;       /* violet-950 */
+        --theme-sidebar-hover: #5b21b6; /* violet-800 */
+        --theme-sidebar-text: #ede9fe;  /* violet-100 */
+      }
+
+      .theme-amber {
+        --theme-primary: #d97706;       /* amber-600 */
+        --theme-primary-hover: #b45309; /* amber-700 */
+        --theme-secondary: #ea580c;     /* orange-600 */
+        --theme-secondary-hover: #c2410c; /* orange-700 */
+        --theme-ring: #f59e0b;          /* amber-500 */
+        --theme-soft: #fffbeb;          /* amber-50 */
+        --theme-text: #92400e;          /* amber-800 */
+
+        --theme-sidebar: #451a03;       /* amber-950 */
+        --theme-sidebar-hover: #92400e; /* amber-800 */
+        --theme-sidebar-text: #fef3c7;  /* amber-100 */
+      }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              theme: {
+                primary: 'var(--theme-primary)',
+                'primary-hover': 'var(--theme-primary-hover)',
+                secondary: 'var(--theme-secondary)',
+                'secondary-hover': 'var(--theme-secondary-hover)',
+                ring: 'var(--theme-ring)',
+                soft: 'var(--theme-soft)',
+                text: 'var(--theme-text)',
+                sidebar: 'var(--theme-sidebar)',
+                'sidebar-hover': 'var(--theme-sidebar-hover)',
+                'sidebar-text': 'var(--theme-sidebar-text)',
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "recharts": "https://aistudiocdn.com/recharts@^3.5.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

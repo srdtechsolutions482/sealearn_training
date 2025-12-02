@@ -1,0 +1,9 @@
+
+{
+  "name": "SeaLearn",
+  "description": "A comprehensive platform for seafarers to find courses, vendors to manage institutions, and admins to oversee the ecosystem.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
