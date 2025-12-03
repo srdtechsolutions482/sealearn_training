@@ -31,7 +31,7 @@ interface Props {
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export const InstituteRegistration: React.FC<Props> = ({ user }) => {
+export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     // --- State ---
     const [formData, setFormData] = useState({
         instituteName: user?.name || '',
