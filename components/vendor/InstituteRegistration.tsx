@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, Button, Input } from '../common/UI';
+import { Country, State } from 'country-state-city';
 import { 
     Building2, 
     MapPin, 
@@ -19,12 +20,16 @@ import {
 import { MOCK_COURSES } from '../../constants';
 import { User as UserType } from '../../types';
 
+
 // Extract unique course titles for the dropdown
 const AVAILABLE_COURSES = Array.from(new Set(MOCK_COURSES.map(c => c.title)));
 
 interface Props {
     user?: UserType | null;
 }
+
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     // --- State ---
@@ -35,16 +40,19 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
         doorNo: '',
         street: user?.address || '',
         landmark: '',
-        country: 'India',
+        country: user?.country || '',
         state: '',
         pincode: '',
         // Admin Contact
         adminName: '',
         adminPhone: user?.phone || '',
         adminEmail: user?.email || '',
+        adminDialCode: '',
         // Customer Care
         carePhone: '',
         careEmail: '',
+        careDialCode: '',
+
         // License
         licenseNumber: '',
         issuingAuthority: 'DG Shipping',
@@ -59,9 +67,25 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     const [errors, setErrors] = useState<Record<string, string>>({});
     
     // Multi-select State
+    const [countries, setCountries] = useState<{ isoCode: string; name: string }[]>([]);
+    const [states, setStates] = useState<{ isoCode: string; name: string }[]>([]);
     const [isCourseDropdownOpen, setIsCourseDropdownOpen] = useState(false);
     const [courseSearchTerm, setCourseSearchTerm] = useState('');
+    const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+    // Country Search State
+    const [countrySearchTerm, setCountrySearchTerm] = useState('');
+    const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+    const [selectedCountryName, setSelectedCountryName] = useState('');
+
+    // State Search State
+    const [stateSearchTerm, setStateSearchTerm] = useState('');
+    const [isStateDropdownOpen, setIsStateDropdownOpen] = useState(false);
+    const [selectedStateName, setSelectedStateName] = useState('');
+
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const countryDropdownRef = useRef<HTMLDivElement>(null);
+    const stateDropdownRef = useRef<HTMLDivElement>(null);
 
     // --- Helpers ---
     
@@ -75,6 +99,65 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
             });
         }
     };
+
+    // Only allow numbers for phone fields
+    const handlePhoneInput = (key: string, value: string) => {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        handleInputChange(key, numericValue);
+    };
+
+    // Only allow numbers for flat/door number
+    const handleNumberOnlyInput = (key: string, value: string) => {
+        const numericValue = value.replace(/[^0-9]/g, '');
+        handleInputChange(key, numericValue);
+    };
+
+    // Email validation
+    const isValidEmail = (email: string): boolean => {
+        return EMAIL_REGEX.test(email);
+    };
+
+    const handleCountryChange = (isoCode: string) => {
+        handleInputChange('country', isoCode);
+        setStates([]);  
+        setFormData(prev => ({ ...prev, state: '' }));
+        setSelectedStateName('');
+        setStateSearchTerm('');
+        
+        if (isoCode) {
+            setStates(State.getStatesOfCountry(isoCode));
+        }
+    };
+
+    const handleCountrySelect = (isoCode: string) => {
+        const country = countries.find(c => c.isoCode === isoCode);
+        handleCountryChange(isoCode);
+        setSelectedCountryName(country?.name || '');
+        setCountrySearchTerm('');
+        setIsCountryDropdownOpen(false);
+    };
+
+    const handleStateChange = (isoCode: string) => {
+        handleInputChange('state', isoCode);
+    };
+
+    const handleStateSelect = (isoCode: string) => {
+        const state = states.find(s => s.isoCode === isoCode);
+        handleStateChange(isoCode);
+        setSelectedStateName(state?.name || '');
+        setStateSearchTerm('');
+        setIsStateDropdownOpen(false);
+    };
+
+    const filteredCountries = countries.filter(country =>
+        country.name.toLowerCase().includes(countrySearchTerm.toLowerCase()) ||
+        country.isoCode.toLowerCase().includes(countrySearchTerm.toLowerCase())
+    );
+
+    const filteredStates = states.filter(state =>
+        state.name.toLowerCase().includes(stateSearchTerm.toLowerCase()) ||
+        state.isoCode.toLowerCase().includes(stateSearchTerm.toLowerCase())
+    );
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -112,16 +195,95 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
         });
     };
 
+    const handleReset = () => {
+        setShowResetConfirm(true);
+    };
+
+    const confirmReset = () => {
+        setFormData({
+            instituteName: '',
+            accreditationNumber: '',
+            doorNo: '',
+            street: '',
+            landmark: '',
+            country: '',
+            state: '',
+            pincode: '',
+            adminName: '',
+            adminPhone: '', // Keep admin phone on reset
+            adminEmail: '',
+            adminDialCode: '',
+            carePhone: '',
+            careEmail: '',
+            careDialCode: '',
+            licenseNumber: '',
+            issuingAuthority: '',
+            selectedCourses: [],
+            otherCourse: '',
+            docFiles: [],
+            declaration: false
+        });
+        
+        setErrors({});
+        setCourseSearchTerm('');
+        setIsCourseDropdownOpen(false);
+        setCountrySearchTerm('');
+        setSelectedCountryName('');
+        setIsCountryDropdownOpen(false);
+        setStateSearchTerm('');
+        setSelectedStateName('');
+        setIsStateDropdownOpen(false);
+        setStates([]);
+        
+        setShowResetConfirm(false);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     // Close dropdown on click outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsCourseDropdownOpen(false);
             }
+            if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+                setIsCountryDropdownOpen(false);
+            }
+            if (stateDropdownRef.current && !stateDropdownRef.current.contains(event.target as Node)) {
+                setIsStateDropdownOpen(false);
+            }
         };
         document.addEventListener("mousedown", handleClickOutside);
+        setCountries(Country.getAllCountries());
+
+        // Sync country name on mount
+        if (formData.country) {
+            const country = Country.getAllCountries().find(c => c.isoCode === formData.country);
+            if (country) {
+                setSelectedCountryName(country.name);
+                setStates(State.getStatesOfCountry(formData.country));
+            }
+        }
+
+        // Sync state name on mount
+        if (formData.state && states.length > 0) {
+            const state = states.find(s => s.isoCode === formData.state);
+            if (state) {
+                setSelectedStateName(state.name);
+            }
+        }
+
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Sync state name when states change
+    useEffect(() => {
+        if (formData.state && states.length > 0) {
+            const state = states.find(s => s.isoCode === formData.state);
+            if (state && selectedStateName !== state.name) {
+                setSelectedStateName(state.name);
+            }
+        }
+    }, [states, formData.state, selectedStateName]);
 
     // --- Validation ---
 
@@ -135,6 +297,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
         // Address
         if (!formData.doorNo.trim()) newErrors.doorNo = "Door No is required";
         if (!formData.street.trim()) newErrors.street = "Street Address is required";
+        if (!formData.landmark.trim()) newErrors.landmark = "Landmark is required"; 
         if (!formData.country.trim()) newErrors.country = "Country is required";
         if (!formData.state.trim()) newErrors.state = "State is required";
         if (!formData.pincode.trim()) newErrors.pincode = "Pincode is required";
@@ -142,11 +305,23 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
         // Admin Contact
         if (!formData.adminName.trim()) newErrors.adminName = "Contact Person is required";
         if (!formData.adminPhone.trim()) newErrors.adminPhone = "Phone is required";
+        else if (formData.adminPhone.length !== 10) newErrors.adminPhone = "Phone number must be at least 10 digits";
+        if (!formData.adminDialCode.trim()) {
+    newErrors.adminDialCode = "Dial Code is required";
+}
+        
         if (!formData.adminEmail.trim()) newErrors.adminEmail = "Email is required";
+        else if (!isValidEmail(formData.adminEmail)) newErrors.adminEmail = "Invalid email format";
 
         // Customer Care
         if (!formData.carePhone.trim()) newErrors.carePhone = "Care Phone is required";
+        else if (formData.carePhone.length !== 10) newErrors.carePhone = "Phone number must be at least 10 digits";
+        if (!formData.careDialCode.trim()) {
+    newErrors.careDialCode = "Dial Code is required";
+}
+        
         if (!formData.careEmail.trim()) newErrors.careEmail = "Care Email is required";
+        else if (!isValidEmail(formData.careEmail)) newErrors.careEmail = "Invalid email format";
 
         // License
         if (!formData.licenseNumber.trim()) newErrors.licenseNumber = "License Number is required";
@@ -168,11 +343,9 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
 
     const handleSubmit = () => {
         if (validateForm()) {
-            // API Call would go here
             console.log("Submitting Registration:", formData);
             alert("Registration Submitted Successfully!");
         } else {
-            // Scroll to first error
             const firstError = document.querySelector('.text-red-500');
             firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -221,55 +394,159 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                             {errors.accreditationNumber && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.accreditationNumber}</p>}
 
                             <div className="pt-2">
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Address Details</label>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <input 
-                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.doorNo ? 'border-red-300' : 'border-slate-200'}`}
-                                        placeholder="Door No *"
-                                        value={formData.doorNo}
-                                        onChange={(e) => handleInputChange('doorNo', e.target.value)}
-                                    />
-                                    <input 
-                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.street ? 'border-red-300' : 'border-slate-200'}`}
-                                        placeholder="Street Address 1 *"
-                                        value={formData.street}
-                                        onChange={(e) => handleInputChange('street', e.target.value)}
-                                    />
-                                    <input 
-                                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                                        placeholder="Landmark"
-                                        value={formData.landmark}
-                                        onChange={(e) => handleInputChange('landmark', e.target.value)}
-                                    />
-                                    <input 
-                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.country ? 'border-red-300' : 'border-slate-200'}`}
-                                        placeholder="Country *"
-                                        value={formData.country}
-                                        onChange={(e) => handleInputChange('country', e.target.value)}
-                                    />
-                                    <input 
-                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.state ? 'border-red-300' : 'border-slate-200'}`}
-                                        placeholder="State *"
-                                        value={formData.state}
-                                        onChange={(e) => handleInputChange('state', e.target.value)}
-                                    />
-                                    <input 
-                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.pincode ? 'border-red-300' : 'border-slate-200'}`}
-                                        placeholder="Pincode *"
-                                        value={formData.pincode}
-                                        onChange={(e) => handleInputChange('pincode', e.target.value)}
-                                    />
+                                <label className="block text-sm font-semibold text-slate-700 mb-4">Address Details</label>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    
+                                    {/* 1. House/Flat No - Alphanumeric */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">House/Flat No *</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.doorNo ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="12A, 5B, 101"
+                                            value={formData.doorNo}
+                                            onChange={(e) => {
+                                                const alphaNumericValue = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+                                                handleInputChange('doorNo', alphaNumericValue);
+                                            }}
+                                        />
+                                        {/* {errors.doorNo && <p className="text-red-500 text-xs mt-1">{errors.doorNo}</p>} */}
+                                    </div>
+
+                                    {/* 2. Street Name */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">Street Name *</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.street ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="Main Road, Park Street"
+                                            value={formData.street}
+                                            onChange={(e) => handleInputChange('street', e.target.value)}
+                                        />
+                                        {/* {errors.street && <p className="text-red-500 text-xs mt-1">{errors.street}</p>} */}
+                                    </div>
+
+                                    {/* 3. Landmark */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">Landmark *</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.landmark ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="Near XYZ Mall, Opp. Park"
+                                            value={formData.landmark}
+                                            onChange={(e) => handleInputChange('landmark', e.target.value)}
+                                        />
+                                        {/* {errors.landmark && <p className="text-red-500 text-xs mt-1">{errors.landmark}</p>} */}
+                                    </div>
+
+                                    {/* 4. Country Dropdown */}
+                                    <div className="relative" ref={countryDropdownRef}>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">Country *</label>
+                                        <div className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus-within:ring-2 focus-within:ring-blue-500 ${errors.country ? 'border-red-300' : 'border-slate-200'}`}>
+                                            <input
+                                                type="text"
+                                                placeholder="Search countries..."
+                                                value={isCountryDropdownOpen ? countrySearchTerm : selectedCountryName}
+                                                onChange={(e) => {
+                                                    setCountrySearchTerm(e.target.value);
+                                                    setIsCountryDropdownOpen(true);
+                                                }}
+                                                onFocus={() => setIsCountryDropdownOpen(true)}
+                                                className="w-full bg-transparent outline-none text-sm"
+                                            />
+                                            
+                                        </div>
+                                        
+                                        {/* Country Dropdown */}
+                                        {isCountryDropdownOpen && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
+                                                {filteredCountries.length > 0 ? (
+                                                    filteredCountries.map(country => (
+                                                        <div
+                                                            key={country.isoCode}
+                                                            onMouseDown={() => handleCountrySelect(country.isoCode)}
+                                                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm flex justify-between items-center"
+                                                        >
+                                                            {country.name}
+                                                            {selectedCountryName === country.name && <CheckCircle size={14} className="text-blue-600" />}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-2 text-sm text-slate-500">No countries found</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 5. State Dropdown */}
+                                    <div className="relative" ref={stateDropdownRef}>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">State *</label>
+                                        <div className={`w-full px-4 py-3 bg-slate-50 border rounded-xl focus-within:ring-2 focus-within:ring-blue-500 ${errors.state ? 'border-red-300' : 'border-slate-200'}`}>
+                                            <input
+                                                type="text"
+                                                placeholder={formData.country ? "Search states..." : "Select Country first"}
+                                                value={isStateDropdownOpen ? stateSearchTerm : selectedStateName}
+                                                onChange={(e) => {
+                                                    setStateSearchTerm(e.target.value);
+                                                    setIsStateDropdownOpen(true);
+                                                }}
+                                                onFocus={() => {
+                                                    if (formData.country) setIsStateDropdownOpen(true);
+                                                }}
+                                                className="w-full bg-transparent outline-none text-sm disabled:text-gray-400"
+                                                disabled={!formData.country}
+                                            />
+                                            {/* {errors.state && <p className="text-red-500 text-xs mt-1">{errors.state}</p>} */}
+                                        </div>
+                                        
+                                        {/* State Dropdown */}
+                                        {isStateDropdownOpen && formData.country && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-10 max-h-48 overflow-y-auto">
+                                                {filteredStates.length > 0 ? (
+                                                    filteredStates.map(state => (
+                                                        <div
+                                                            key={state.isoCode}
+                                                            onMouseDown={() => handleStateSelect(state.isoCode)}
+                                                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm flex justify-between items-center"
+                                                        >
+                                                            {state.name}
+                                                            {selectedStateName === state.name && <CheckCircle size={14} className="text-blue-600" />}
+                                                        </div>
+                                                    ))
+                                                ) : (
+                                                    <div className="px-4 py-2 text-sm text-slate-500">No states found</div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* 6. Postcode - Digits Only */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">Postcode *</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.pincode ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="400001"
+                                            value={formData.pincode}
+                                            onChange={(e) => {
+                                                const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                                handleInputChange('pincode', numericValue);
+                                            }}
+                                            inputMode="numeric"
+                                            maxLength={6}
+                                        />
+                                        {/* {errors.pincode && <p className="text-red-500 text-xs mt-1">{errors.pincode}</p>} */}
+                                    </div>
                                 </div>
-                                {(errors.doorNo || errors.street || errors.country || errors.state || errors.pincode) && (
-                                    <p className="text-red-500 text-xs mt-2">Please complete all address fields.</p>
+                                
+                                {/* Summary Error */}
+                                {(errors.doorNo || errors.street || errors.landmark || errors.country || errors.state || errors.pincode) && (
+                                    <p className="text-red-500 text-xs mt-3 font-medium">Please complete all address fields correctly.</p>
                                 )}
                             </div>
+
                         </div>
                     </Card>
 
-                    {/* 2 & 3. Contacts */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Admin Contact */}
+                    {/* 2 & 3. Contacts - FULL WIDTH STACKED */}
+                    <div className="space-y-8">
+                        {/* Admin Contact - Full Width */}
                         <Card>
                             <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                                 <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600"><User size={20}/></div>
@@ -277,52 +554,111 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                             </h2>
                             <div className="space-y-4">
                                 <Input 
-                                    label="Contact Person *"
+                                    label="Contact Person Name *"
                                     value={formData.adminName}
                                     onChange={(e: any) => handleInputChange('adminName', e.target.value)}
                                 />
                                 {errors.adminName && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.adminName}</p>}
 
-                                <Input 
-                                    label="Phone Number *"
-                                    value={formData.adminPhone}
-                                    onChange={(e: any) => handleInputChange('adminPhone', e.target.value)}
-                                />
-                                {errors.adminPhone && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.adminPhone}</p>}
+                                {/* Dial Code + Phone Number Row */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* Dial Code */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Dial Code</label>
+                                        <input 
+                                            className="w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                            placeholder="+91"
+                                            value={formData.adminDialCode || ''}
+                                            onChange={(e) => handleInputChange('adminDialCode', e.target.value)}
+                                            maxLength={5}
+                                        />
+                                        {errors.adminDialCode && <p className="text-red-500 text-xs mt-1">{errors.adminDialCode}</p>}
+                                    </div>
 
-                                <Input 
-                                    label="Email *"
-                                    type="email"
-                                    value={formData.adminEmail}
-                                    onChange={(e: any) => handleInputChange('adminEmail', e.target.value)}
-                                />
-                                {errors.adminEmail && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.adminEmail}</p>}
+                                    {/* Phone Number */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number * (10 digits)</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.adminPhone ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="9876543210"
+                                            value={formData.adminPhone}
+                                            onChange={(e) => handlePhoneInput('adminPhone', e.target.value)}
+                                            inputMode="numeric"
+                                            maxLength={10}
+                                        />
+                                        {errors.adminPhone && <p className="text-red-500 text-xs mt-1">{errors.adminPhone}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email *</label>
+                                    <input 
+                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.adminEmail ? 'border-red-300' : 'border-slate-200'}`}
+                                        placeholder="admin@example.com"
+                                        type="email"
+                                        value={formData.adminEmail}
+                                        onChange={(e) => handleInputChange('adminEmail', e.target.value)}
+                                    />
+                                    {errors.adminEmail && <p className="text-red-500 text-xs mt-1">{errors.adminEmail}</p>}
+                                </div>
                             </div>
                         </Card>
 
-                         {/* Customer Care */}
-                         <Card>
+
+                        {/* Customer Care - Full Width */}
+                        <Card>
                             <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                                 <div className="p-2 bg-teal-100 rounded-lg text-teal-600"><Phone size={20}/></div>
                                 Customer Care
                             </h2>
                             <div className="space-y-4">
-                                <Input 
-                                    label="Phone Number *"
-                                    value={formData.carePhone}
-                                    onChange={(e: any) => handleInputChange('carePhone', e.target.value)}
-                                />
-                                {errors.carePhone && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.carePhone}</p>}
+                                {/* Dial Code + Phone Number Row */}
+                                <div className="grid grid-cols-3 gap-3">
+                                    {/* Dial Code */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Dial Code</label>
+                                        <input 
+                                            className="w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                            placeholder="+91"
+                                            value={formData.careDialCode || ''}
+                                            onChange={(e) => handleInputChange('careDialCode', e.target.value)}
+                                            maxLength={5}
+                                        />
+                                        {errors.careDialCode && <p className="text-red-500 text-xs mt-1">{errors.careDialCode}</p>}
 
-                                <Input 
-                                    label="Email *"
-                                    type="email"
-                                    value={formData.careEmail}
-                                    onChange={(e: any) => handleInputChange('careEmail', e.target.value)}
-                                />
-                                {errors.careEmail && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.careEmail}</p>}
+                                    </div>
+
+                                    {/* Phone Number */}
+                                    <div className="col-span-2">
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">Phone Number * (10 digits)</label>
+                                        <input 
+                                            className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.carePhone ? 'border-red-300' : 'border-slate-200'}`}
+                                            placeholder="9876543210"
+                                            value={formData.carePhone}
+                                            onChange={(e) => handlePhoneInput('carePhone', e.target.value)}
+                                            inputMode="numeric"
+                                            maxLength={10}
+                                        />
+                                        {errors.carePhone && <p className="text-red-500 text-xs mt-1">{errors.carePhone}</p>}
+                                    </div>
+                                </div>
+
+                                {/* Email */}
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Email *</label>
+                                    <input 
+                                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${errors.careEmail ? 'border-red-300' : 'border-slate-200'}`}
+                                        placeholder="care@example.com"
+                                        type="email"
+                                        value={formData.careEmail}
+                                        onChange={(e) => handleInputChange('careEmail', e.target.value)}
+                                    />
+                                    {errors.careEmail && <p className="text-red-500 text-xs mt-1">{errors.careEmail}</p>}
+                                </div>
                             </div>
                         </Card>
+
                     </div>
 
                     {/* 4. License Details */}
@@ -332,26 +668,26 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                             License Details
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                             <div>
+                            <div>
                                 <Input 
                                     label="License Number *"
                                     value={formData.licenseNumber}
                                     onChange={(e: any) => handleInputChange('licenseNumber', e.target.value)}
                                 />
                                 {errors.licenseNumber && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.licenseNumber}</p>}
-                             </div>
-                             <div>
+                            </div>
+                            <div>
                                 <Input 
                                     label="Issuing Authority *"
                                     value={formData.issuingAuthority}
                                     onChange={(e: any) => handleInputChange('issuingAuthority', e.target.value)}
                                 />
                                 {errors.issuingAuthority && <p className="text-red-500 text-xs -mt-3 mb-3">{errors.issuingAuthority}</p>}
-                             </div>
+                            </div>
                         </div>
                     </Card>
 
-                    {/* 5. Course Offerings */}
+                    {/* 5. Course Offerings - SEARCHABLE */}
                     <Card>
                         <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
                             <div className="p-2 bg-purple-100 rounded-lg text-purple-600"><BookOpen size={20}/></div>
@@ -446,12 +782,15 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                 onChange={handleFileChange}
                             />
-                            <div className="text-center pointer-events-none">
+                            <div className="text-center pointer-events-none flex flex-col items-center">
                                 <UploadCloud className="text-gray-400 mx-auto mb-3" size={40} />
-                                <p className="text-base font-semibold text-gray-700">Upload Resolution Copy or Accreditation Certificate</p>
-                                <p className="text-sm text-gray-500 mt-1">Supports PDF, PNG, JPG (Max 5MB)</p>
-                                <Button variant="outline" className="mt-4 pointer-events-none">Browse Files</Button>
+                                <p className="text-base font-semibold text-gray-700 text-center">Upload Resolution Copy or Accreditation Certificate</p>
+                                <p className="text-sm text-gray-500 mt-1 text-center">Supports PDF, PNG, JPG (Max 5MB)</p>
+                                <div className="mt-4">
+                                    <Button variant="outline" className="pointer-events-none mx-auto block">Browse Files</Button>
+                                </div>
                             </div>
+
                         </div>
 
                         {/* File List */}
@@ -460,7 +799,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                                 {formData.docFiles.map((file, idx) => (
                                     <div key={idx} className="flex justify-between items-center p-3 border border-gray-200 rounded-lg bg-white">
                                         <div className="flex items-center gap-3">
-                                             <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                                 <FileText size={20} />
                                             </div>
                                             <div>
@@ -484,7 +823,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
 
                     {/* 7. Declaration */}
                     <Card className={`border-l-4 ${errors.declaration ? 'border-l-red-500' : 'border-l-blue-600'}`}>
-                         <label className="flex items-start gap-4 cursor-pointer">
+                        <label className="flex items-start gap-4 cursor-pointer">
                             <div className="relative flex items-center">
                                 <input 
                                     type="checkbox" 
@@ -501,9 +840,46 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                         {errors.declaration && <p className="text-red-500 text-xs mt-2 ml-9">{errors.declaration}</p>}
                     </Card>
 
+                    {/* Reset Confirmation Modal */}
+                    {showResetConfirm && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+                                <div className="text-center mb-6">
+                                    <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                                    <h3 className="text-xl font-bold text-gray-900 mb-2">Clear All Fields?</h3>
+                                    <p className="text-gray-600">
+                                        This action will reset all form data (except admin phone). This cannot be undone.
+                                    </p>
+                                </div>
+                                
+                                <div className="flex gap-3 justify-end pt-4">
+                                    <Button 
+                                        variant="outline" 
+                                        className="px-6"
+                                        onClick={() => setShowResetConfirm(false)}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button 
+                                        className="px-6 bg-red-600 hover:bg-red-700 text-white"
+                                        onClick={confirmReset}
+                                    >
+                                        Yes, Reset All
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Submit Button */}
                     <div className="flex justify-end gap-4 pt-4">
-                        <Button variant="outline" className="px-8">Cancel</Button>
+                        <Button 
+                            variant="outline" 
+                            className="px-8 hover:bg-red-50 hover:text-red-600 border-red-200"
+                            onClick={handleReset}
+                        >
+                            Reset All Fields
+                        </Button>
                         <Button className="px-8 py-3 text-lg" onClick={handleSubmit}>Register Institute</Button>
                     </div>
 
