@@ -1,9 +1,8 @@
-
 export enum UserRole {
-  GUEST = 'guest',
-  ADMIN = 'admin',
-  VENDOR = 'vendor',
-  SEAFARER = 'seafarer'
+  GUEST = "guest",
+  ADMIN = "admin",
+  VENDOR = "vendor",
+  SEAFARER = "seafarer",
 }
 
 export interface User {
@@ -11,7 +10,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  status: 'active' | 'disabled'; // Added for account management
+  status: "active" | "disabled"; // Added for account management
   password?: string; // Added for mock auth validation
   avatarUrl?: string;
   phone?: string;
@@ -24,15 +23,15 @@ export interface CourseMaster {
   title: string;
   category: string; // Basic, Advanced, Simulator
   targetAudience: string;
-  
+
   // New Requested Fields
   entryRequirements?: string;
   courseOverview?: string;
   additionalNotes?: string;
-  
+
   // Legacy/System fields
-  code?: string; 
-  status: 'active' | 'archived';
+  code?: string;
+  status: "active" | "archived";
 }
 
 export interface Course {
@@ -40,11 +39,11 @@ export interface Course {
   title: string;
   code: string;
   courseType: string;
-  mode: 'Online' | 'Offline' | 'Hybrid';
+  mode: "Online" | "Offline" | "Hybrid";
   vendorName: string;
   price: number;
   duration: string;
-  status: 'approved' | 'pending' | 'rejected' | 'suspended';
+  status: "approved" | "pending" | "rejected" | "suspended";
   enrolled: number;
   rating: number;
   category: string;
@@ -59,7 +58,7 @@ export interface Course {
 export interface Vendor {
   id: string;
   companyName: string;
-  status: 'active' | 'pending' | 'rejected';
+  status: "active" | "pending" | "rejected";
   totalCourses: number;
   // Expanded fields for detail view
   email?: string;
@@ -70,7 +69,7 @@ export interface Vendor {
   foundedYear?: string;
   contactPerson?: string;
   description?: string;
-  
+
   // Institute Specifics
   licenseNumber?: string;
   issuingAuthority?: string;
@@ -85,33 +84,33 @@ export interface Enrollment {
   studentName: string;
   courseTitle: string;
   enrollmentDate: string;
-  status: 'active' | 'completed' | 'cancelled';
+  status: "active" | "completed" | "cancelled";
   email: string;
   phone: string;
   progress: number;
 }
 
-export type ViewState = 
-  | 'home' 
-  | 'about' 
-  | 'institutions' 
-  | 'contact' 
-  | 'login' 
-  | 'register' 
-  | 'settings'
+export type ViewState =
+  | "home"
+  | "about"
+  | "institutions"
+  | "contact"
+  | "login"
+  | "register"
+  | "settings"
   // Admin Views
-  | 'admin-dashboard' 
-  | 'admin-vendors' 
-  | 'admin-courses'
-  | 'admin-users'
+  | "admin-dashboard"
+  | "admin-vendors"
+  | "admin-courses"
+  | "admin-users"
   // Vendor Views
-  | 'vendor-dashboard' 
-  | 'vendor-courses' 
-  | 'vendor-add-course'
-  | 'vendor-institute'
-  | 'vendor-students'
+  | "vendor-dashboard"
+  | "vendor-courses"
+  | "vendor-add-course"
+  | "vendor-institute"
+  | "vendor-students"
   // Seafarer Views
-  | 'seafarer-dashboard' 
-  | 'seafarer-courses' 
-  | 'seafarer-my-courses'
-  | 'seafarer-profile';
+  | "seafarer-dashboard"
+  | "seafarer-courses"
+  | "seafarer-my-courses"
+  | "seafarer-profile";
