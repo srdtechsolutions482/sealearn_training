@@ -102,7 +102,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 150,
     rating: 4.8,
-    image:"public/assets/STCWBasicSafetyTraining.jpeg"
+    image:"assets/STCWBasicSafetyTraining.jpeg"
 
   },
   {
@@ -123,7 +123,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 85,
     rating: 4.5,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '3',
@@ -143,7 +143,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 92,
     rating: 4.6,
-    image:"public/assets/ProficiencyInSurvivalCraft.jpg"
+    image:"assets/ProficiencyInSurvivalCraft.jpg"
   },
   {
     id: '4',
@@ -163,7 +163,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 210,
     rating: 4.9,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '5',
@@ -183,7 +183,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 65,
     rating: 4.3,
-    image:"public/assets/ProficiencyInSurvivalCraft.jpg"
+    image:"assets/ProficiencyInSurvivalCraft.jpg"
   },
   {
     id: '6',
@@ -203,7 +203,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 180,
     rating: 4.7,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '7',
@@ -223,7 +223,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 110,
     rating: 4.4,
-    image:"public/assets/EngineRoomResourceMgt.jpg"
+    image:"assets/EngineRoomResourceMgt.jpg"
   },
   {
     id: '8',
@@ -243,7 +243,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 75,
     rating: 4.8,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '9',
@@ -263,7 +263,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'pending',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/ChartingFuture.jpg"
+    image:"assets/ChartingFuture.jpg"
   },
   {
     id: '10',
@@ -283,7 +283,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'pending',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '11',
@@ -303,7 +303,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 40,
     rating: 4.6,
-    image:"public/assets/BridgeTeamManagement.jpg"
+    image:"assets/BridgeTeamManagement.jpg"
   },
   {
     id: '12',
@@ -323,7 +323,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 30,
     rating: 4.2,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '13',
@@ -343,7 +343,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 25,
     rating: 4.7,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '14',
@@ -363,7 +363,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 120,
     rating: 4.5,
-    image:"public/assets/ContainerShip.jpg"
+    image:"assets/ContainerShip.jpg"
   },
   {
     id: '15',
@@ -383,7 +383,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'rejected',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/MedicalFirstAid.jpg"
+    image:"assets/MedicalFirstAid.jpg"
   },
   {
     id: '16',
@@ -403,7 +403,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 55,
     rating: 4.1,
-    image:"public/assets/ECDISType-Specific.jpg"
+    image:"assets/ECDISType-Specific.jpg"
   },
   {
     id: '17',
@@ -423,7 +423,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 90,
     rating: 4.8,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '18',
@@ -443,7 +443,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 45,
     rating: 4.3,
-    image:"public/assets/ProficiencyInSurvivalCraft.jpg"
+    image:"assets/ProficiencyInSurvivalCraft.jpg"
   },
   {
     id: '19',
@@ -463,7 +463,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 89,
     rating: 4.2,
-    image:"public/assets/Radar&ARPASimulation.jpg"
+    image:"assets/Radar&ARPASimulation.jpg"
   },
   {
     id: '20',
@@ -483,7 +483,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'pending',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/GMDSSGeneralOperator.jpg"
+    image:"assets/GMDSSGeneralOperator.jpg"
   },
   {
     id: '21',
@@ -503,7 +503,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 35,
     rating: 4.6,
-    image:"public/assets/PST&PSSRCombined.jpg"
+    image:"assets/PST&PSSRCombined.jpg"
   },
   {
     id: '22',
@@ -523,7 +523,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 60,
     rating: 4.7,
-    image:"public/assets/ShipSecurityOfficer.jpg"
+    image:"assets/ShipSecurityOfficer.jpg"
   },
   {
     id: '23',
@@ -543,7 +543,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 100,
     rating: 4.8,
-    image:"public/assets/TrainningSession.jpg"
+    image:"assets/TrainningSession.jpg"
   },
   {
     id: '24',
@@ -563,7 +563,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 20,
     rating: 4.5,
-    image:"public/assets/ProficiencyInSurvivalCraft.jpg"
+    image:"assets/ProficiencyInSurvivalCraft.jpg"
   },
   {
     id: '25',
@@ -583,7 +583,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'rejected',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/MedicalFirstAid.jpg"
+    image:"assets/MedicalFirstAid.jpg"
   },
   {
     id: '26',
@@ -603,7 +603,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 15,
     rating: 4.9,
-    image:"public/assets/GMDSSGeneralOperator.jpg"
+    image:"assets/GMDSSGeneralOperator.jpg"
   },
   {
     id: '27',
@@ -623,7 +623,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 200,
     rating: 4.4,
-    image:"public/assets/ECDISType-Specific.jpg"
+    image:"assets/ECDISType-Specific.jpg"
   },
   {
     id: '28',
@@ -643,7 +643,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 50,
     rating: 4.3,
-    image:"public/assets/ContainerShip.jpg"
+    image:"assets/ContainerShip.jpg"
   },
   {
     id: '29',
@@ -663,7 +663,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 80,
     rating: 4.5,
-    image:"public/assets/ChemicalTankerFamiliarization.jpg"
+    image:"assets/ChemicalTankerFamiliarization.jpg"
   },
   {
     id: '30',
@@ -683,7 +683,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 220,
     rating: 4.6,
-    image:"public/assets/ChartingFuture.jpg"
+    image:"assets/ChartingFuture.jpg"
   },
   {
     id: '31',
@@ -703,7 +703,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'approved',
     enrolled: 100,
     rating: 4.7,
-    image:"public/assets/BridgeTeamManagement.jpg"
+    image:"assets/BridgeTeamManagement.jpg"
   },
   {
     id: '32',
@@ -723,7 +723,7 @@ export const MOCK_COURSES: Course[] = [
     status: 'pending',
     enrolled: 0,
     rating: 0,
-    image:"public/assets/AdvancedFireFighting.jpg"
+    image:"assets/AdvancedFireFighting.jpg"
   },
 ];
 
