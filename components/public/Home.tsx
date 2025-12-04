@@ -9,7 +9,7 @@ export const HomePage = ({ onNavigate }: { onNavigate: (v: string) => void }) =>
     {/* Hero Section */}
     <div className="relative bg-blue-900 text-white py-24 px-4 overflow-hidden">
       <div className="absolute inset-0 bg-blue-900/50 z-10"></div>
-      <img src="components/public/assets/Ocean.jpg" alt="Ocean" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+      <img src="public/assets/Ocean.jpg" alt="Ocean" className="absolute inset-0 w-full h-full object-cover opacity-30" />
       <div className="relative z-20 max-w-4xl mx-auto text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">Navigate Your Maritime Career</h1>
         <p className="text-xl text-blue-100 mb-8">Find the best STCW courses, connect with top maritime institutions, and manage your seafarer profile all in one place.</p>
