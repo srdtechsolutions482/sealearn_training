@@ -23,16 +23,50 @@ const STANDARD_COURSES = [
     title: "Basic STCW Safety Training",
     type: "Safety",
     audience: "All Seafarers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
   },
-  { title: "Advanced Fire Fighting", type: "Safety", audience: "Officers" },
-  { title: "Medical First Aid", type: "Medical", audience: "All Seafarers" },
-  { title: "GMDSS", type: "Communication", audience: "Radio Officers" },
+  {
+    title: "Advanced Fire Fighting",
+    type: "Safety",
+    audience: "Officers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
+  },
+  {
+    title: "Medical First Aid",
+    type: "Medical",
+    audience: "All Seafarers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
+  },
+  {
+    title: "GMDSS",
+    type: "Communication",
+    audience: "Radio Officers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
+  },
   {
     title: "ECDIS Type Specific",
     type: "Navigation",
     audience: "Deck Officers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
   },
-  { title: "Ship Security Officer", type: "Security", audience: "Officers" },
+  {
+    title: "Ship Security Officer",
+    type: "Security",
+    audience: "Officers",
+    entryRequirements:
+      "Valid CoC/CoS or sponsorship + 12 months sea service + Passport & CDC",
+    validity: "Unlimited",
+  },
 ];
 
 interface VendorCourseFormProps {
@@ -54,10 +88,14 @@ export const VendorCourseForm = ({
     customTitle: "",
     courseType: "",
     targetAudience: "",
-    description: "",
+    description: "", // Used for Course Overview
+    entryRequirements: "",
+    customEntryRequirements: "", // Kept in state structure for compatibility, but unused
+    validity: "",
+    additionalNotes: "",
     thumbnail: null as File | null,
     thumbnailPreview: "",
-    mode: "Online" as "Online" | "Offline" | "Hybrid",
+    mode: "Online" as "Online" | "In-person" | "Hybrid",
     location: "",
     duration: "",
     currency: "USD",
@@ -87,12 +125,8 @@ export const VendorCourseForm = ({
   const vendorFee = (fee * 0.8).toFixed(2);
   const isViewMode = mode === "view";
 
-  // Calculate if end date should be disabled
-  const isEndDateDisabled = !!(
-    formData.startDate &&
-    formData.duration &&
-    !isNaN(parseInt(formData.duration))
-  );
+  // Calculate if duration should be disabled (when both dates are selected)
+  const isDurationDisabled = !!(formData.startDate && formData.endDate);
 
   // --- Initialization Effect ---
   useEffect(() => {
@@ -111,12 +145,16 @@ export const VendorCourseForm = ({
         customTitle: isStandard ? "" : initialData.title,
         courseType: initialData.courseType || "",
         targetAudience: initialData.targetAudience || "",
-        description: initialData.courseOverview || "",
+        description: initialData.courseOverview || "", // Maps to Course Overview
+        entryRequirements: initialData.entryRequirements || "",
+        customEntryRequirements: "",
+        validity: initialData.validity || "",
+        additionalNotes: initialData.additionalNotes || "",
         thumbnail: null,
         thumbnailPreview: `https://picsum.photos/seed/${initialData.id}/400/200`, // Mock image
         mode: initialData.mode || "Online",
         location:
-          initialData.mode === "Offline" ? "Main Campus, Building A" : "", // Mock location if not in type
+          initialData.mode === "In-person" ? "Main Campus, Building A" : "", // Mock location if not in type
         duration: durationVal,
         currency: "USD",
         price: initialData.price.toString(),
@@ -131,7 +169,8 @@ export const VendorCourseForm = ({
 
   // --- Effects ---
 
-  // Auto-populate Type and Audience
+  // Auto-populate Type, Audience, Entry Req, Validity
+  // Removed Overview and Notes from auto-population as per request
   useEffect(() => {
     if (mode === "view") return; // Don't auto-overwrite in view mode
     const standard = STANDARD_COURSES.find(
@@ -142,6 +181,9 @@ export const VendorCourseForm = ({
         ...prev,
         courseType: standard.type,
         targetAudience: standard.audience,
+        entryRequirements: standard.entryRequirements,
+        customEntryRequirements: "",
+        validity: standard.validity,
       }));
     } else if (formData.titleSelect === "Other" && !initialData) {
       // Only clear if not editing/viewing existing data
@@ -149,6 +191,9 @@ export const VendorCourseForm = ({
         ...prev,
         courseType: "",
         targetAudience: "",
+        entryRequirements: "",
+        customEntryRequirements: "",
+        validity: "",
       }));
     }
   }, [formData.titleSelect, mode, initialData]);
@@ -167,43 +212,49 @@ export const VendorCourseForm = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Auto-calculate End Date
+  // Auto-calculate Duration based on Start and End Date
   useEffect(() => {
     if (isViewMode) return;
 
-    // Only calculate if we have a start date and a numeric duration
-    if (formData.startDate && formData.duration) {
-      const days = parseInt(formData.duration, 10);
+    if (formData.startDate && formData.endDate) {
+      const start = new Date(formData.startDate);
+      const end = new Date(formData.endDate);
 
-      // Check if days is a valid number
-      if (!isNaN(days) && days >= 0) {
-        const start = new Date(formData.startDate);
-        // Add days to start date
-        // Note: setDate handles month rollovers automatically
-        start.setDate(start.getDate() + days);
+      // Calculate difference in milliseconds
+      const diffTime = end.getTime() - start.getTime();
+      // Convert to days (Math.ceil to be safe with DST/Timezones, though standard date is usually safe)
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // Format to YYYY-MM-DD
-        const calculatedEndDate = start.toISOString().split("T")[0];
+      // Calculate inclusive duration: e.g., Jan 1 to Jan 1 is 1 day.
+      const calculatedDuration = diffDays + 1;
+
+      if (!isNaN(calculatedDuration) && calculatedDuration > 0) {
+        const newDuration = calculatedDuration.toString();
 
         setFormData((prev) => {
-          // Only update if it's different to prevent infinite loops (though dependency array handles this)
-          if (prev.endDate !== calculatedEndDate) {
-            return { ...prev, endDate: calculatedEndDate };
+          if (prev.duration !== newDuration) {
+            return { ...prev, duration: newDuration };
           }
           return prev;
         });
 
-        // Clear end date error if it exists
-        if (errors.endDate) {
+        // Clear duration error if valid
+        if (errors.duration) {
           setErrors((prev) => {
             const newErrors = { ...prev };
-            delete newErrors.endDate;
+            delete newErrors.duration;
             return newErrors;
           });
         }
+      } else {
+        // If end date is before start date or invalid, clear duration
+        setFormData((prev) => {
+          if (prev.duration !== "") return { ...prev, duration: "" };
+          return prev;
+        });
       }
     }
-  }, [formData.startDate, formData.duration, isViewMode]);
+  }, [formData.startDate, formData.endDate, isViewMode]);
 
   // --- Handlers ---
 
@@ -220,15 +271,81 @@ export const VendorCourseForm = ({
     }
   };
 
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isViewMode) return;
+    const newStartDate = e.target.value;
+
+    setFormData((prev) => {
+      const updates: any = { startDate: newStartDate };
+      // If new start date is after current end date, clear end date to ensure validity
+      if (prev.endDate && newStartDate > prev.endDate) {
+        updates.endDate = "";
+        updates.duration = "";
+      }
+      return { ...prev, ...updates };
+    });
+
+    if (errors.startDate) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.startDate;
+        return newErrors;
+      });
+    }
+  };
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isViewMode) return;
+    const newEndDate = e.target.value;
+
+    // Check if end date is before start date
+    if (formData.startDate && newEndDate < formData.startDate) {
+      setErrors((prev) => ({
+        ...prev,
+        endDate: "End date cannot be before start date",
+      }));
+    } else {
+      if (errors.endDate) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.endDate;
+          return newErrors;
+        });
+      }
+    }
+
+    handleInputChange("endDate", newEndDate);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isViewMode) return;
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+
+      // Validate: 20MB limit (20 * 1024 * 1024 bytes)
+      const maxSize = 20 * 1024 * 1024;
+      if (file.size > maxSize) {
+        setErrors((prev) => ({
+          ...prev,
+          thumbnail: "Image size must be less than 20MB",
+        }));
+        return;
+      }
+
       setFormData((prev) => ({
         ...prev,
         thumbnail: file,
         thumbnailPreview: URL.createObjectURL(file),
       }));
+
+      // Clear error if exists
+      if (errors.thumbnail) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.thumbnail;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -242,31 +359,48 @@ export const VendorCourseForm = ({
       newErrors.customTitle = "Please specify the course title";
     }
 
-    // 4. Description Validation (No Phone/Email)
+    // New: Course Type & Audience Validation (Only if Title is Other)
+    if (formData.titleSelect === "Other") {
+      if (!formData.courseType.trim())
+        newErrors.courseType = "Course Type is required";
+      if (!formData.targetAudience.trim())
+        newErrors.targetAudience = "Target Audience is required";
+    }
+
+    // 2. Overview (Description) Validation
     if (!formData.description.trim()) {
-      newErrors.description = "Description is required";
-    } else {
-      const phoneRegex =
-        /\b[\+]?[(]?[0-9]{2,6}[)]?[-\s\.]?[0-9]{2,20}[-\s\.]?[0-9]{2,20}\b/g;
-      const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
-      if (
-        phoneRegex.test(formData.description) ||
-        emailRegex.test(formData.description)
-      ) {
-        newErrors.description =
-          "Description cannot contain contact details (Phone or Email).";
-      }
+      newErrors.description = "Course Overview is required";
+    }
+
+    // 3. Entry Requirements
+    if (!formData.entryRequirements.trim()) {
+      newErrors.entryRequirements = "Entry Requirement is required";
+    }
+
+    // 4. Validity
+    if (!formData.validity.trim()) {
+      newErrors.validity = "Validity is required";
+    }
+
+    // 5. Additional Notes
+    if (!formData.additionalNotes.trim()) {
+      newErrors.additionalNotes = "Additional Notes is required";
+    }
+
+    // Thumbnail Validation
+    if (!formData.thumbnail && !formData.thumbnailPreview) {
+      newErrors.thumbnail = "Course thumbnail is required";
     }
 
     // 6-7. Mode & Location
-    if (formData.mode === "Offline" && !formData.location.trim()) {
-      newErrors.location = "Location is mandatory for offline courses";
+    if (formData.mode === "In-person" && !formData.location.trim()) {
+      newErrors.location = "Location is mandatory for In-person courses";
     }
 
     // 8. Duration
     // Change: Duration is optional for Online mode
     if (formData.mode !== "Online" && !formData.duration.trim()) {
-      newErrors.duration = "Duration is required for offline courses";
+      newErrors.duration = "Duration is required for In-person courses";
     }
 
     // 9. Fee
@@ -278,9 +412,9 @@ export const VendorCourseForm = ({
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    if (formData.mode === "Offline") {
+    if (formData.mode === "In-person") {
       if (!formData.startDate) {
-        newErrors.startDate = "Start date is mandatory for offline courses";
+        newErrors.startDate = "Start date is mandatory for In-person courses";
       } else {
         const start = new Date(formData.startDate);
         if (start < today)
@@ -288,12 +422,13 @@ export const VendorCourseForm = ({
       }
 
       if (!formData.endDate) {
-        newErrors.endDate = "End date is mandatory for offline courses";
+        newErrors.endDate = "End date is mandatory for In-person courses";
       } else if (formData.startDate) {
         const start = new Date(formData.startDate);
         const end = new Date(formData.endDate);
-        if (end <= start)
-          newErrors.endDate = "End date must be after start date";
+        if (end < start)
+          // Changed to check if strictly less than for validation, equal is fine (1 day duration)
+          newErrors.endDate = "End date must be on or after start date";
       }
     }
 
@@ -334,6 +469,10 @@ export const VendorCourseForm = ({
       courseType: "",
       targetAudience: "",
       description: "",
+      entryRequirements: "",
+      customEntryRequirements: "",
+      validity: "",
+      additionalNotes: "",
       thumbnail: null,
       thumbnailPreview: "",
       mode: "Online",
@@ -406,6 +545,7 @@ export const VendorCourseForm = ({
                     type="text"
                     value={displayTitle}
                     readOnly
+                    title={displayTitle}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-700"
                   />
                 ) : (
@@ -414,6 +554,7 @@ export const VendorCourseForm = ({
                       errors.titleSelect ? "border-red-300" : "border-slate-200"
                     }`}
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    title={formData.titleSelect}
                   >
                     <span
                       className={
@@ -478,7 +619,8 @@ export const VendorCourseForm = ({
               {/* Custom Title Input if 'Other' */}
               {formData.titleSelect === "Other" && !isViewMode && (
                 <Input
-                  label="Specify Course Title *"
+                  label="Specify Course Title"
+                  required
                   value={formData.customTitle}
                   onChange={(e: any) =>
                     handleInputChange("customTitle", e.target.value)
@@ -493,39 +635,172 @@ export const VendorCourseForm = ({
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* 2. Course Type (Locked) */}
+                {/* 2. Course Type */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Course Type
+                    Course Type{" "}
+                    {!isViewMode && <span className="text-red-500">*</span>}
                   </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
-                    value={formData.courseType}
-                    readOnly
-                    placeholder="Auto-populated"
-                  />
+                  {formData.titleSelect === "Other" && !isViewMode ? (
+                    <div>
+                      <input
+                        type="text"
+                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors.courseType
+                            ? "border-red-300"
+                            : "border-slate-200"
+                        }`}
+                        value={formData.courseType}
+                        onChange={(e) =>
+                          handleInputChange("courseType", e.target.value)
+                        }
+                        placeholder="Enter course type"
+                        title={formData.courseType}
+                      />
+                      {errors.courseType && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.courseType}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                      value={formData.courseType}
+                      readOnly
+                      placeholder="Auto-populated"
+                      title={formData.courseType}
+                    />
+                  )}
                 </div>
 
-                {/* 3. Target Audience (Locked) */}
+                {/* 3. Target Audience */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Target Audience
+                    Target Audience{" "}
+                    {!isViewMode && <span className="text-red-500">*</span>}
                   </label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
-                    value={formData.targetAudience}
-                    readOnly
-                    placeholder="Auto-populated"
-                  />
+                  {formData.titleSelect === "Other" && !isViewMode ? (
+                    <div>
+                      <input
+                        type="text"
+                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors.targetAudience
+                            ? "border-red-300"
+                            : "border-slate-200"
+                        }`}
+                        value={formData.targetAudience}
+                        onChange={(e) =>
+                          handleInputChange("targetAudience", e.target.value)
+                        }
+                        placeholder="Enter target audience"
+                        title={formData.targetAudience}
+                      />
+                      {errors.targetAudience && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.targetAudience}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                      value={formData.targetAudience}
+                      readOnly
+                      placeholder="Auto-populated"
+                      title={formData.targetAudience}
+                    />
+                  )}
                 </div>
               </div>
 
-              {/* 4. Description */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Validity Field */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Validity{" "}
+                    {!isViewMode && <span className="text-red-500">*</span>}
+                  </label>
+                  {formData.titleSelect === "Other" && !isViewMode ? (
+                    <div>
+                      <input
+                        type="text"
+                        className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors.validity
+                            ? "border-red-300"
+                            : "border-slate-200"
+                        }`}
+                        value={formData.validity}
+                        onChange={(e) =>
+                          handleInputChange("validity", e.target.value)
+                        }
+                        placeholder="Enter validity"
+                        title={formData.validity}
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed"
+                      value={formData.validity}
+                      readOnly
+                      placeholder="Auto-populated"
+                      title={formData.validity}
+                    />
+                  )}
+                  {errors.validity && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.validity}
+                    </p>
+                  )}
+                </div>
+
+                {/* Place holder to balance grid if needed, otherwise empty */}
+                <div></div>
+              </div>
+
+              {/* Entry Requirements Field */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Course Description{" "}
+                  Entry Requirements{" "}
+                  {!isViewMode && <span className="text-red-500">*</span>}
+                </label>
+                {formData.titleSelect === "Other" && !isViewMode ? (
+                  <textarea
+                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all h-[50px] ${
+                      errors.entryRequirements
+                        ? "border-red-300 ring-1 ring-red-200"
+                        : "border-slate-200"
+                    }`}
+                    placeholder="Enter entry requirements..."
+                    value={formData.entryRequirements}
+                    onChange={(e) =>
+                      handleInputChange("entryRequirements", e.target.value)
+                    }
+                    title={formData.entryRequirements}
+                  />
+                ) : (
+                  <textarea
+                    className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 cursor-not-allowed h-[50px] resize-none"
+                    value={formData.entryRequirements}
+                    readOnly
+                    placeholder="Auto-populated"
+                    title={formData.entryRequirements}
+                  />
+                )}
+                {errors.entryRequirements && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.entryRequirements}
+                  </p>
+                )}
+              </div>
+
+              {/* 4. Course Overview (was Description) */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Course Overview{" "}
                   {!isViewMode && <span className="text-red-500">*</span>}
                 </label>
                 <textarea
@@ -534,12 +809,13 @@ export const VendorCourseForm = ({
                       ? "border-red-300 ring-1 ring-red-200"
                       : "border-slate-200"
                   } ${isViewMode ? "bg-gray-50 text-gray-500" : ""}`}
-                  placeholder="Enter detailed course description..."
+                  placeholder="Enter detailed course overview..."
                   value={formData.description}
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
                   }
                   readOnly={isViewMode}
+                  title={formData.description}
                 />
                 {errors.description ? (
                   <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
@@ -554,21 +830,53 @@ export const VendorCourseForm = ({
                 )}
               </div>
 
+              {/* New Additional Notes Field */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  Additional Notes{" "}
+                  {!isViewMode && <span className="text-red-500">*</span>}
+                </label>
+                <textarea
+                  className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all h-24 ${
+                    errors.additionalNotes
+                      ? "border-red-300 ring-1 ring-red-200"
+                      : "border-slate-200"
+                  } ${isViewMode ? "bg-gray-50 text-gray-500" : ""}`}
+                  placeholder="Enter any additional notes..."
+                  value={formData.additionalNotes}
+                  onChange={(e) =>
+                    handleInputChange("additionalNotes", e.target.value)
+                  }
+                  readOnly={isViewMode}
+                  title={formData.additionalNotes}
+                />
+                {errors.additionalNotes && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle size={12} /> {errors.additionalNotes}
+                  </p>
+                )}
+              </div>
+
               {/* 5. Thumbnail */}
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
-                  Course Thumbnail
+                  Course Thumbnail{" "}
+                  {!isViewMode && <span className="text-red-500">*</span>}
                 </label>
                 <div
-                  className={`border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 ${
+                  className={`border-2 border-dashed ${
+                    errors.thumbnail
+                      ? "border-red-300 bg-red-50"
+                      : "border-gray-300 bg-gray-50"
+                  } rounded-xl p-6 flex flex-col items-center justify-center ${
                     !isViewMode && "hover:bg-gray-100 cursor-pointer"
-                  } transition-colors relative`}
+                  } transition-colors relative group`}
                 >
                   {!isViewMode && (
                     <input
                       type="file"
                       accept="image/*"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
+                      className="absolute inset-0 opacity-0 cursor-pointer z-10"
                       onChange={handleFileChange}
                     />
                   )}
@@ -580,7 +888,7 @@ export const VendorCourseForm = ({
                         className="w-full h-full object-contain"
                       />
                       {!isViewMode && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs opacity-0 hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity">
                           Change Image
                         </div>
                       )}
@@ -596,6 +904,16 @@ export const VendorCourseForm = ({
                     </>
                   )}
                 </div>
+                {errors.thumbnail && (
+                  <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                    <AlertCircle size={12} /> {errors.thumbnail}
+                  </p>
+                )}
+                {!isViewMode && !errors.thumbnail && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Max file size: 20MB. Supported formats: JPEG, JIF, PNG.
+                  </p>
+                )}
               </div>
             </div>
           </Card>
@@ -628,13 +946,13 @@ export const VendorCourseForm = ({
                   <button
                     disabled={isViewMode}
                     className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                      formData.mode === "Offline"
+                      formData.mode === "In-person"
                         ? "bg-white shadow-sm text-blue-600"
                         : "text-gray-500 hover:text-gray-700"
                     } ${isViewMode && "cursor-default"}`}
-                    onClick={() => handleInputChange("mode", "Offline")}
+                    onClick={() => handleInputChange("mode", "In-person")}
                   >
-                    Offline
+                    In-person
                   </button>
                 </div>
               </div>
@@ -643,7 +961,7 @@ export const VendorCourseForm = ({
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-2">
                   Location{" "}
-                  {formData.mode === "Offline" && !isViewMode && (
+                  {formData.mode === "In-person" && !isViewMode && (
                     <span className="text-red-500">*</span>
                   )}
                 </label>
@@ -667,11 +985,75 @@ export const VendorCourseForm = ({
                       handleInputChange("location", e.target.value)
                     }
                     readOnly={isViewMode}
+                    title={formData.location}
                   />
                 </div>
                 {errors.location && (
                   <p className="text-red-500 text-xs mt-1">{errors.location}</p>
                 )}
+              </div>
+
+              {/* 10-11. Dates (Moved above Duration) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Start Date{" "}
+                    {formData.mode === "In-person" && !isViewMode && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </label>
+                  <input
+                    type="date"
+                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.startDate ? "border-red-300" : "border-slate-200"
+                    } ${isViewMode ? "bg-gray-50 text-gray-500" : ""}`}
+                    value={formData.startDate}
+                    min={new Date().toISOString().split("T")[0]}
+                    onChange={handleStartDateChange}
+                    readOnly={isViewMode}
+                    title={formData.startDate}
+                  />
+                  {errors.startDate && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.startDate}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    End Date{" "}
+                    {formData.mode === "In-person" && !isViewMode && (
+                      <span className="text-red-500">*</span>
+                    )}
+                  </label>
+                  <input
+                    type="date"
+                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
+                      errors.endDate ? "border-red-300" : "border-slate-200"
+                    } ${
+                      isViewMode ? "bg-gray-50 text-gray-500" : ""
+                    } disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed`}
+                    value={formData.endDate}
+                    min={
+                      formData.startDate ||
+                      new Date().toISOString().split("T")[0]
+                    }
+                    onChange={handleEndDateChange}
+                    readOnly={isViewMode}
+                    disabled={isDurationDisabled}
+                    title={formData.endDate}
+                  />
+                  {errors.endDate && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.endDate}
+                    </p>
+                  )}
+                  {isDurationDisabled && !errors.endDate && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Auto-calculated based on duration
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* 8. Duration */}
@@ -689,13 +1071,17 @@ export const VendorCourseForm = ({
                       type="text"
                       className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors.duration ? "border-red-300" : "border-slate-200"
-                      } ${isViewMode ? "bg-gray-50 text-gray-500" : ""}`}
+                      } ${
+                        isViewMode ? "bg-gray-50 text-gray-500" : ""
+                      } disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed`}
                       placeholder="e.g. 5"
                       value={formData.duration}
                       onChange={(e) =>
                         handleInputChange("duration", e.target.value)
                       }
-                      readOnly={isViewMode}
+                      readOnly={isViewMode || isDurationDisabled}
+                      disabled={isDurationDisabled}
+                      title={formData.duration}
                     />
                     <span className="absolute right-4 top-3.5 text-gray-500 text-sm font-medium">
                       Days
@@ -704,6 +1090,11 @@ export const VendorCourseForm = ({
                   {errors.duration && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors.duration}
+                    </p>
+                  )}
+                  {isDurationDisabled && !errors.duration && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Auto-calculated based on dates
                     </p>
                   )}
                 </div>
@@ -746,76 +1137,12 @@ export const VendorCourseForm = ({
                           }
                         }}
                         readOnly={isViewMode}
+                        title={formData.price}
                       />
                     </div>
                   </div>
                   {errors.price && (
                     <p className="text-red-500 text-xs mt-1">{errors.price}</p>
-                  )}
-                </div>
-              </div>
-
-              {/* 10-11. Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Start Date{" "}
-                    {formData.mode === "Offline" && !isViewMode && (
-                      <span className="text-red-500">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="date"
-                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.startDate ? "border-red-300" : "border-slate-200"
-                    } ${isViewMode ? "bg-gray-50 text-gray-500" : ""}`}
-                    value={formData.startDate}
-                    min={new Date().toISOString().split("T")[0]}
-                    onChange={(e) =>
-                      handleInputChange("startDate", e.target.value)
-                    }
-                    readOnly={isViewMode}
-                  />
-                  {errors.startDate && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.startDate}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    End Date{" "}
-                    {formData.mode === "Offline" && !isViewMode && (
-                      <span className="text-red-500">*</span>
-                    )}
-                  </label>
-                  <input
-                    type="date"
-                    className={`w-full px-4 py-3 bg-slate-50 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.endDate ? "border-red-300" : "border-slate-200"
-                    } ${
-                      isViewMode ? "bg-gray-50 text-gray-500" : ""
-                    } disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed`}
-                    value={formData.endDate}
-                    min={
-                      formData.startDate ||
-                      new Date().toISOString().split("T")[0]
-                    }
-                    onChange={(e) =>
-                      handleInputChange("endDate", e.target.value)
-                    }
-                    readOnly={isViewMode || isEndDateDisabled} // Disable if auto-calculated
-                    disabled={isEndDateDisabled} // Change: Disable if start date & duration present
-                  />
-                  {errors.endDate && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.endDate}
-                    </p>
-                  )}
-                  {isEndDateDisabled && !errors.endDate && (
-                    <p className="text-xs text-gray-400 mt-1">
-                      Auto-calculated based on duration
-                    </p>
                   )}
                 </div>
               </div>
@@ -832,11 +1159,11 @@ export const VendorCourseForm = ({
               />
 
               {/* 13. Buttons */}
-              <div className="flex justify-between items-center pt-6 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row items-center pt-6 border-t border-gray-100 gap-4">
                 {mode === "edit" && (
                   <Button
                     variant="danger"
-                    className="mr-auto"
+                    className="w-full sm:w-auto"
                     onClick={() => {
                       setSuspendConfirmation("");
                       setShowSuspendModal(true);
@@ -845,22 +1172,37 @@ export const VendorCourseForm = ({
                     <Ban size={18} /> Suspend Course
                   </Button>
                 )}
-                <div className="flex gap-4 ml-auto">
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto sm:ml-auto">
                   {isViewMode ? (
-                    <Button onClick={onBack} variant="outline">
+                    <Button
+                      onClick={onBack}
+                      variant="outline"
+                      className="w-full sm:w-auto"
+                    >
                       Close View
                     </Button>
                   ) : (
                     <>
-                      {onBack && (
-                        <Button variant="outline" onClick={onBack}>
+                      {onBack && mode !== "edit" && (
+                        <Button
+                          variant="outline"
+                          onClick={onBack}
+                          className="w-full sm:w-auto"
+                        >
                           Cancel
                         </Button>
                       )}
-                      <Button variant="outline" onClick={handleReset}>
+                      <Button
+                        variant="outline"
+                        onClick={handleReset}
+                        className="w-full sm:w-auto"
+                      >
                         <RotateCcw size={18} /> Reset
                       </Button>
-                      <Button onClick={handleSubmit}>
+                      <Button
+                        onClick={handleSubmit}
+                        className="w-full sm:w-auto"
+                      >
                         <CheckCircle size={18} />{" "}
                         {mode === "create" ? "Create Course" : "Save Changes"}
                       </Button>
