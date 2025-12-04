@@ -67,7 +67,7 @@ export const HomePage = ({ onNavigate }: { onNavigate: (v: string) => void }) =>
         {MOCK_COURSES.slice(0, 3).map(course => (
           <Card key={course.id} className="hover:shadow-lg transition-shadow">
             <div className="h-48 -mx-6 -mt-6 mb-4 bg-gray-200">
-               <img src={`https://picsum.photos/seed/${course.id}/400/200`} alt={course.title} className="w-full h-full object-cover rounded-t-xl" />
+               <img src={course.image} alt={course.title} className="w-full h-full object-cover rounded-t-xl" />
             </div>
             <div className="flex justify-between items-start mb-2">
               <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{course.category}</span>

@@ -3,12 +3,13 @@ import { Button, Card } from '../common/UI';
 import { Search } from 'lucide-react';
 import { MOCK_COURSES } from '../../constants';
 
+
 export const HomePage = ({ onNavigate }: { onNavigate: (v: string) => void }) => (
   <div className="space-y-16 pb-12">
     {/* Hero Section */}
     <div className="relative bg-blue-900 text-white py-24 px-4 overflow-hidden">
       <div className="absolute inset-0 bg-blue-900/50 z-10"></div>
-      <img src="https://picsum.photos/1920/600" alt="Ocean" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+      <img src="assets/Ocean.jpg" alt="Ocean" className="absolute inset-0 w-full h-full object-cover opacity-30" />
       <div className="relative z-20 max-w-4xl mx-auto text-center">
         <h1 className="text-4xl md:text-6xl font-bold mb-6">Navigate Your Maritime Career</h1>
         <p className="text-xl text-blue-100 mb-8">Find the best STCW courses, connect with top maritime institutions, and manage your seafarer profile all in one place.</p>
@@ -33,7 +34,7 @@ export const HomePage = ({ onNavigate }: { onNavigate: (v: string) => void }) =>
         {MOCK_COURSES.slice(0, 3).map(course => (
           <Card key={course.id} className="hover:shadow-lg transition-shadow">
             <div className="h-48 -mx-6 -mt-6 mb-4 bg-gray-200">
-               <img src={`https://picsum.photos/seed/${course.id}/400/200`} alt={course.title} className="w-full h-full object-cover rounded-t-xl" />
+               <img src={course.image} alt={course.title} className="w-full h-full object-cover rounded-t-xl" />
             </div>
             <div className="flex justify-between items-start mb-2">
               <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">{course.category}</span>

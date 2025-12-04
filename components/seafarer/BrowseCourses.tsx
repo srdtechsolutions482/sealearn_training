@@ -21,7 +21,7 @@ export const SeafarerBrowseCourses = () => {
         {MOCK_COURSES.map((course) => (
           <Card key={course.id} className="hover:shadow-md transition-shadow flex flex-col h-full">
             <div className="h-40 bg-gray-200 rounded-lg mb-4 overflow-hidden relative">
-                <img src={`https://picsum.photos/seed/${course.id}/400/200`} alt={course.title} className="w-full h-full object-cover" />
+                <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
                 <span className="absolute top-2 right-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold">
                     {course.category}
                 </span>

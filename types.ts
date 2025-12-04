@@ -53,6 +53,7 @@ export interface Course {
   entryRequirements?: string;
   courseOverview?: string;
   additionalNotes?: string;
+  image:string
 }
 
 export interface Vendor {

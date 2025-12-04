@@ -72,7 +72,7 @@ export const SeafarerDashboard = () => {
           <div className="space-y-4">
             {MOCK_COURSES.slice(0, 3).map(course => (
                <div key={course.id} className="flex gap-4 p-3 border border-gray-100 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
-                 <img src={`https://picsum.photos/seed/${course.id}/100/80`} className="w-24 h-20 object-cover rounded-md" alt="" />
+                 <img src={course.image} className="w-24 h-20 object-cover rounded-md" alt="" />
                  <div className="flex-1">
                    <h4 className="font-bold text-sm">{course.title}</h4>
                    <p className="text-xs text-gray-500 mb-1">{course.vendorName}</p>
