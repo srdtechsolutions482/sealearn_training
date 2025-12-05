@@ -765,8 +765,8 @@ export const VendorInstituteRegistration: React.FC = () => {
             Registration Successful!
           </h2>
           <p className="text-lg text-gray-600 max-w-lg mx-auto leading-relaxed mb-8">
-            Your institute register successfully after admin approval u can able
-            to login using your email and password.
+            Your institute register successfully after admin approval you can
+            able to login using your email and password.
           </p>
           <div className="flex justify-center gap-4">
             <Button onClick={() => window.location.reload()}>
