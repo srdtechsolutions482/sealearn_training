@@ -1,7 +1,7 @@
 import fetch from "node-fetch";
 
 export const handler = async (event) => {
-  const response = await fetch("http://13.201.58.203:8000/register", {
+  const response = await fetch("http://13.201.58.203:8443/register", {
     method: "POST",     });
 
   const data = await response.json();
@@ -10,4 +10,5 @@ export const handler = async (event) => {
     statusCode: 200,
     body: JSON.stringify(data),
   };
+
 };
