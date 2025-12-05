@@ -32,9 +32,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, user
       case UserRole.ADMIN:
         return [
           { icon: LayoutDashboard, label: 'Dashboard', view: 'admin-dashboard' },
-          { icon: Building2, label: 'Vendor Mgmt', view: 'admin-vendors' },
-          { icon: BookOpen, label: 'Course Mgmt', view: 'admin-courses' },
-          { icon: Users, label: 'User Mgmt', view: 'admin-users' },
+          { icon: Building2, label: 'Institute Approval', view: 'admin-institute-approval' },
+          { icon: Building2, label: 'Institute Management', view: 'admin-vendors' },
+          { icon: BookOpen, label: 'Course Management', view: 'admin-courses' },
+          { icon: Users, label: 'Seafarer Management', view: 'admin-users' },
           { icon: Settings, label: 'Settings', view: 'settings' },
         ];
       case UserRole.VENDOR:

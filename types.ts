@@ -31,7 +31,17 @@ export interface CourseMaster {
 
   // Legacy/System fields
   code?: string;
-  status: "active" | "archived";
+  status: "active" | "pending" | "closed" | "suspended";
+
+  instituteName?:string;
+  startDate?:string;
+  endDate?:string;
+  enrolmentCount:number;
+  location?:string;
+  isOnline:boolean;
+  availableSeats:number;
+  bookedSeats:number;
+  totalSeats:number;
 }
 
 export interface Course {
@@ -59,7 +69,7 @@ export interface Course {
 export interface Vendor {
   id: string;
   companyName: string;
-  status: "active" | "pending" | "rejected";
+  status: "approved" | "pending" | "rejected" | "suspended";
   totalCourses: number;
   // Expanded fields for detail view
   email?: string;
@@ -78,6 +88,9 @@ export interface Vendor {
   customerCarePhone?: string;
   coursesOffered?: string[];
   documents?: { name: string; type: string; date: string }[];
+  verifiedBy?:string;
+  createdAt?:string;
+
 }
 
 export interface Enrollment {
@@ -91,6 +104,13 @@ export interface Enrollment {
   progress: number;
 }
 
+export interface ApprovalAction {
+    instituteId: string;
+    action: 'approve' | 'reject' | 'suspend';
+    comments: string;
+    selectedCourses: string[];
+}
+
 export type ViewState =
   | "home"
   | "about"
@@ -101,6 +121,7 @@ export type ViewState =
   | "settings"
   // Admin Views
   | "admin-dashboard"
+  |"admin-institute-approval"
   | "admin-vendors"
   | "admin-courses"
   | "admin-users"

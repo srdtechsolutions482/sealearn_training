@@ -45,7 +45,17 @@ export const MOCK_COURSE_MASTERS: CourseMaster[] = [
         courseOverview: "Mandatory safety training for all seafarers covering PST, PSSR, EFA, and FPFF.",
         entryRequirements: "Valid medical certificate",
         additionalNotes: "Bring swimwear for PST",
-        status: 'active' 
+        status: 'active',
+        instituteName:"OceanAcademy",
+        startDate:"05/12/2025",
+        endDate:"07/12/2025",
+        enrolmentCount:100,
+        location:"42 Port Road, Mumbai, India",
+        availableSeats:15,
+        bookedSeats:10,
+        totalSeats:25,
+
+
     },
     { 
         id: '2', 
@@ -56,7 +66,15 @@ export const MOCK_COURSE_MASTERS: CourseMaster[] = [
         courseOverview: "Advanced fire prevention and control techniques.",
         entryRequirements: "Basic Fire Fighting Certificate",
         additionalNotes: "Boiler suit required",
-        status: 'active' 
+        status: 'closed' ,
+        instituteName:"OceanAcademy",
+        startDate:"05/12/2025",
+        endDate:"07/12/2025",
+        enrolmentCount:57,
+        location:"42 Port Road, Mumbai, India",
+        availableSeats:15,
+        bookedSeats:10,
+        totalSeats:25,
     },
     { 
         id: '3', 
@@ -67,7 +85,15 @@ export const MOCK_COURSE_MASTERS: CourseMaster[] = [
         courseOverview: "First aid onboard ships.",
         entryRequirements: "EFA Certificate",
         additionalNotes: "N/A",
-        status: 'active' 
+        status: 'pending' ,
+        instituteName:"OceanAcademy",
+        startDate:"05/12/2025",
+        endDate:"07/12/2025",
+        enrolmentCount:24,
+        location:"42 Port Road, Mumbai, India",
+        availableSeats:15,
+        bookedSeats:10,
+        totalSeats:25,
     },
     { 
         id: '4', 
@@ -78,7 +104,15 @@ export const MOCK_COURSE_MASTERS: CourseMaster[] = [
         courseOverview: "Communication equipment operation.",
         entryRequirements: "COC",
         additionalNotes: "Laptop recommended",
-        status: 'active' 
+        status: 'active' ,
+        instituteName:"OceanAcademy",
+        startDate:"05/12/2025",
+        endDate:"07/12/2025",
+        enrolmentCount:5,
+        location:"42 Port Road, Mumbai, India",
+        availableSeats:15,
+        bookedSeats:10,
+        totalSeats:25,
     },
 ];
 
@@ -731,7 +765,7 @@ export const MOCK_VENDORS: Vendor[] = [
   { 
     id: '1', 
     companyName: 'Maritime Inst A', 
-    status: 'active', 
+    status: 'approved', 
     totalCourses: 12,
     email: 'contact@maritimeinste.com',
     phone: '+91 98765 43210',
@@ -746,12 +780,14 @@ export const MOCK_VENDORS: Vendor[] = [
     customerCareEmail: 'support@maritimeinste.com',
     customerCarePhone: '+91 22 2345 6789',
     coursesOffered: ['Basic STCW Safety', 'Advanced Fire Fighting', 'ECDIS', 'GMDSS'],
-    documents: [{ name: 'Accreditation Cert.pdf', type: 'application/pdf', date: '2023-01-15' }]
+    documents: [{ name: 'Accreditation Cert.pdf', type: 'application/pdf', date: '2023-01-15' }],
+    verifiedBy:"PaulHeyman",
+    createdAt:"05/12/2025"
   },
   { 
     id: '2', 
     companyName: 'Ocean Academy', 
-    status: 'active', 
+    status: 'approved', 
     totalCourses: 8,
     email: 'admissions@oceanacademy.com',
     phone: '+91 91234 56789',
@@ -766,7 +802,9 @@ export const MOCK_VENDORS: Vendor[] = [
     customerCareEmail: 'care@oceanacademy.com',
     customerCarePhone: '+91 44 8765 4321',
     coursesOffered: ['GMDSS', 'Medical First Aid', 'PSSR'],
-    documents: [{ name: 'ISO 9001 Cert.pdf', type: 'application/pdf', date: '2023-03-22' }]
+    documents: [{ name: 'ISO 9001 Cert.pdf', type: 'application/pdf', date: '2023-03-22' }],
+    verifiedBy:"PaulHeyman",
+    createdAt:"05/12/2025"
   },
   { 
     id: '3', 
@@ -786,7 +824,9 @@ export const MOCK_VENDORS: Vendor[] = [
     customerCareEmail: 'help@blueseacorp.com',
     customerCarePhone: '+91 33 2222 3333',
     coursesOffered: ['Basic STCW Safety'],
-    documents: [{ name: 'Application Form.pdf', type: 'application/pdf', date: '2023-11-01' }]
+    documents: [{ name: 'Application Form.pdf', type: 'application/pdf', date: '2023-11-01' }],
+    verifiedBy:"PaulHeyman",
+    createdAt:"05/12/2025"
   },
   { 
       id: '4', 
@@ -806,7 +846,9 @@ export const MOCK_VENDORS: Vendor[] = [
       customerCareEmail: 'info@gshub.com',
       customerCarePhone: '+91 90000 22222',
       coursesOffered: [],
-      documents: []
+      documents: [],
+      verifiedBy:"PaulHeyman",
+    createdAt:"05/12/2025"
     },
 ];
 

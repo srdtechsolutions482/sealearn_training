@@ -15,6 +15,7 @@ import { AdminVendorList } from "./components/admin/VendorList";
 import { AdminCourseList } from "./components/admin/CourseList";
 import { AdminUserList } from "./components/admin/UserList";
 import { AdminSettings } from "./components/admin/Settings";
+import { AdminInstituteApproval } from "./components/admin/AdminInstituteApproval";
 
 // Vendor Imports
 import { VendorDashboard } from "./components/vendor/Dashboard";
@@ -159,6 +160,8 @@ const App = () => {
         return <AdminDashboard onNavigate={navigate} />;
       case "admin-vendors":
         return <AdminVendorList />;
+      case "admin-institute-approval": 
+        return <AdminInstituteApproval />;
       case "admin-courses":
         return <AdminCourseList />;
       case "admin-users":
