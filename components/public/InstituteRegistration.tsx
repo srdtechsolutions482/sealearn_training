@@ -13,120 +13,52 @@ import {
   Trash2,
   Search,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
-import { MOCK_COURSES } from "../../constants";
-import { User as UserType } from "../../types";
+import { API_CONFIG } from "../../apiconfig";
 
-// Extract unique course titles for the dropdown
-const AVAILABLE_COURSES = Array.from(new Set(MOCK_COURSES.map((c) => c.title)));
+// --- API Types ---
+interface ApiCourse {
+  id: number;
+  course_title: string;
+}
 
-const COUNTRIES_DATA: Record<string, string[]> = {
-  India: [
-    "Andaman and Nicobar Islands",
-    "Andhra Pradesh",
-    "Arunachal Pradesh",
-    "Assam",
-    "Bihar",
-    "Chandigarh",
-    "Chhattisgarh",
-    "Dadra and Nagar Haveli",
-    "Daman and Diu",
-    "Delhi",
-    "Goa",
-    "Gujarat",
-    "Haryana",
-    "Himachal Pradesh",
-    "Jammu and Kashmir",
-    "Jharkhand",
-    "Karnataka",
-    "Kerala",
-    "Ladakh",
-    "Lakshadweep",
-    "Madhya Pradesh",
-    "Maharashtra",
-    "Manipur",
-    "Meghalaya",
-    "Mizoram",
-    "Nagaland",
-    "Odisha",
-    "Puducherry",
-    "Punjab",
-    "Rajasthan",
-    "Sikkim",
-    "Tamil Nadu",
-    "Telangana",
-    "Tripura",
-    "Uttar Pradesh",
-    "Uttarakhand",
-    "West Bengal",
-  ],
-  "United States": [
-    "Alabama",
-    "Alaska",
-    "Arizona",
-    "California",
-    "Colorado",
-    "Florida",
-    "Georgia",
-    "Hawaii",
-    "Illinois",
-    "Massachusetts",
-    "Nevada",
-    "New Jersey",
-    "New York",
-    "Texas",
-    "Washington",
-  ],
-  "United Kingdom": ["England", "Scotland", "Wales", "Northern Ireland"],
-  Singapore: ["Singapore"],
-  Australia: [
-    "New South Wales",
-    "Victoria",
-    "Queensland",
-    "Western Australia",
-    "South Australia",
-    "Tasmania",
-  ],
-  Canada: ["Ontario", "Quebec", "British Columbia", "Alberta"],
-  UAE: ["Abu Dhabi", "Dubai", "Sharjah", "Ajman"],
-  Philippines: ["Manila", "Cebu", "Davao", "Calabarzon"],
-};
+interface ApiCountry {
+  id: number;
+  name: string;
+  iso?: string; // Specific requirement
+  sortname?: string; // Fallback
+}
 
-const PHONE_CODES = [
-  { code: "+91", country: "IN" },
-  { code: "+1", country: "US" },
-  { code: "+44", country: "UK" },
-  { code: "+65", country: "SG" },
-  { code: "+61", country: "AU" },
-  { code: "+971", country: "AE" },
-  { code: "+63", country: "PH" },
-  { code: "+86", country: "CN" },
-  { code: "+81", country: "JP" },
-  { code: "+49", country: "DE" },
-  { code: "+33", country: "FR" },
-];
+interface ApiState {
+  id: number;
+  name: string;
+}
 
-const splitPhone = (fullPhone: string) => {
-  if (!fullPhone) return { code: "+91", number: "" };
-  const cleanPhone = fullPhone.replace(/\s/g, "");
-  // Check for matching codes, longest first to avoid partial matches (e.g. +1 vs +12)
-  const sortedCodes = PHONE_CODES.map((c) => c.code).sort(
-    (a, b) => b.length - a.length
-  );
-  const foundCode = sortedCodes.find((c) => cleanPhone.startsWith(c));
+interface ApiIsoCode {
+  id?: number;
+  name: string;
+  iso?: string;
+  nicename?: string;
+  phonecode: number | string;
+}
 
-  if (foundCode) {
-    return { code: foundCode, number: cleanPhone.slice(foundCode.length) };
-  }
-  return { code: "+91", number: fullPhone };
-};
+interface PhoneCodeOption {
+  code: string;
+  country: string;
+}
+
+interface DropdownOption {
+  label: string;
+  value: string;
+}
 
 // --- Reusable Searchable Dropdown Component ---
 interface SearchableSelectProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: DropdownOption[];
   placeholder?: string;
   error?: string;
   disabled?: boolean;
@@ -146,10 +78,11 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const filteredOptions = options.filter((opt) =>
-    opt.toLowerCase().includes(searchTerm.toLowerCase())
+    opt.label.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Close on click outside
+  const selectedOption = options.find((opt) => opt.value === value);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -164,8 +97,8 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSelect = (option: string) => {
-    onChange(option);
+  const handleSelect = (optionValue: string) => {
+    onChange(optionValue);
     setIsOpen(false);
     setSearchTerm("");
   };
@@ -204,10 +137,10 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
       >
         <span
           className={`block truncate ${
-            value ? "text-slate-900" : "text-gray-400"
+            selectedOption ? "text-slate-900" : "text-gray-400"
           }`}
         >
-          {value || placeholder}
+          {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
           size={16}
@@ -244,18 +177,18 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <div
-                  key={opt}
+                  key={opt.value}
                   className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between
                                         ${
-                                          opt === value
+                                          opt.value === value
                                             ? "bg-blue-50 text-blue-700 font-medium"
                                             : "text-slate-700 hover:bg-slate-50"
                                         }
                                     `}
-                  onClick={() => handleSelect(opt)}
+                  onClick={() => handleSelect(opt.value)}
                 >
-                  {opt}
-                  {opt === value && (
+                  {opt.label}
+                  {opt.value === value && (
                     <CheckCircle size={14} className="text-blue-600" />
                   )}
                 </div>
@@ -279,6 +212,7 @@ interface PhoneInputProps {
   numberValue: string;
   onCodeChange: (val: string) => void;
   onNumberChange: (val: string) => void;
+  phoneCodes: PhoneCodeOption[];
   error?: string;
 }
 
@@ -288,13 +222,14 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   numberValue,
   onCodeChange,
   onNumberChange,
+  phoneCodes,
   error,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const filteredCodes = PHONE_CODES.filter(
+  const filteredCodes = phoneCodes.filter(
     (c) =>
       c.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.code.includes(searchTerm)
@@ -321,7 +256,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   };
 
   const handleNumberInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Restrict to numeric only
     const val = e.target.value.replace(/\D/g, "");
     onNumberChange(val);
   };
@@ -363,7 +297,6 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
           {isDropdownOpen && (
             <div className="absolute z-30 w-[180px] mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100">
-              {/* Search Input */}
               <div className="p-2 border-b border-gray-100 bg-slate-50">
                 <div className="relative">
                   <Search
@@ -383,9 +316,9 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
               <div className="overflow-y-auto">
                 {filteredCodes.length > 0 ? (
-                  filteredCodes.map((c) => (
+                  filteredCodes.map((c, i) => (
                     <div
-                      key={c.code + c.country}
+                      key={`${c.code}-${c.country}-${i}`}
                       className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 flex justify-between items-center ${
                         c.code === codeValue
                           ? "bg-blue-50 text-blue-700 font-medium"
@@ -425,30 +358,37 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
   );
 };
 
-interface Props {
-  user?: UserType | null;
-}
+export const VendorInstituteRegistration: React.FC = () => {
+  // --- UI State ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
-  // --- State ---
-  // Initialize admin phone logic
-  const initialAdminPhone = splitPhone(user?.phone || "");
+  // --- Dynamic Data State ---
+  const [availableCourses, setAvailableCourses] = useState<string[]>([]);
 
+  // Options for Dropdowns
+  const [countryOptions, setCountryOptions] = useState<DropdownOption[]>([]);
+  const [stateOptions, setStateOptions] = useState<DropdownOption[]>([]);
+  const [phoneCodes, setPhoneCodes] = useState<PhoneCodeOption[]>([
+    { code: "+91", country: "IN" }, // Fallback
+  ]);
+
+  // --- Form State ---
   const [formData, setFormData] = useState({
-    instituteName: user?.name || "",
-    accreditationNumber: user?.details?.licenseNumber || "",
+    instituteName: "",
+    accreditationNumber: "",
     // Address
     doorNo: "",
-    street: user?.address || "",
+    street: "",
     landmark: "",
-    country: "India",
-    state: "",
+    country: "", // Stores ISO Code (e.g., 'IN')
+    state: "", // Stores State Name
     pincode: "",
     // Admin Contact
     adminName: "",
-    adminPhoneCode: initialAdminPhone.code,
-    adminPhone: initialAdminPhone.number,
-    adminEmail: user?.email || "",
+    adminPhoneCode: "+91",
+    adminPhone: "",
+    adminEmail: "",
     // Customer Care
     carePhoneCode: "+91",
     carePhone: "",
@@ -471,6 +411,128 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
   const [courseSearchTerm, setCourseSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // --- Helper for URLs ---
+  const getUrl = (endpoint: string) => {
+    const base = API_CONFIG.BASE_URL.replace(/\/$/, "");
+    const path = endpoint.replace(/^\//, "");
+    return `${base}/${path}`;
+  };
+
+  // --- API Fetching ---
+  const fetchStates = async (countryIso: string) => {
+    if (!countryIso) return;
+    try {
+      // API call: /states/{iso} (e.g., /states/IN)
+      const url = `${getUrl(API_CONFIG.ENDPOINTS.GET_STATES)}/${countryIso}`;
+      const response = await fetch(url, { headers: API_CONFIG.HEADERS });
+      const data = await response.json();
+      const statesArray = Array.isArray(data) ? data : data.data || [];
+
+      const options: DropdownOption[] = statesArray.map((s: ApiState) => ({
+        label: s.name,
+        value: s.name, // Using name as value for now as per previous context
+      }));
+      setStateOptions(options);
+    } catch (error) {
+      console.error("Error fetching states:", error);
+      setStateOptions([]);
+    }
+  };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      // Run all initial fetches in parallel
+      const [coursesRes, countriesRes, isoRes] = await Promise.allSettled([
+        fetch(getUrl(API_CONFIG.ENDPOINTS.GET_COURSES), {
+          headers: API_CONFIG.HEADERS,
+        }),
+        fetch(getUrl(API_CONFIG.ENDPOINTS.GET_COUNTRIES), {
+          headers: API_CONFIG.HEADERS,
+        }),
+        fetch(getUrl(API_CONFIG.ENDPOINTS.GET_ISO_CODES), {
+          headers: API_CONFIG.HEADERS,
+        }),
+      ]);
+
+      // 1. Process Courses
+      if (coursesRes.status === "fulfilled") {
+        try {
+          const data = await coursesRes.value.json();
+          const courses = Array.isArray(data) ? data : data.data || [];
+          const uniqueTitles = Array.from(
+            new Set(courses.map((c: ApiCourse) => c.course_title))
+          ) as string[];
+          setAvailableCourses(uniqueTitles);
+        } catch (e) {
+          console.error("Error parsing courses", e);
+        }
+      }
+
+      // 2. Process Countries
+      let loadedOptions: DropdownOption[] = [];
+      if (countriesRes.status === "fulfilled") {
+        try {
+          const data = await countriesRes.value.json();
+          const countries = Array.isArray(data) ? data : data.data || [];
+
+          loadedOptions = countries.map((c: ApiCountry) => ({
+            label: c.name,
+            // Use ISO field if available, fallback to sortname, else fallback to name
+            value: c.iso || c.sortname || c.name,
+          }));
+
+          setCountryOptions(loadedOptions);
+        } catch (e) {
+          console.error("Error parsing countries", e);
+        }
+      }
+
+      // 3. Process ISO Codes (for Phone only)
+      if (isoRes.status === "fulfilled") {
+        try {
+          const data = await isoRes.value.json();
+          const fetchedIsoCodes = Array.isArray(data) ? data : data.data || [];
+
+          const mappedCodes: PhoneCodeOption[] = fetchedIsoCodes.map(
+            (c: ApiIsoCode) => ({
+              code: `+${c.phonecode}`,
+              country: c.iso || c.nicename || c.name || "Unknown",
+            })
+          );
+          setPhoneCodes(mappedCodes);
+
+          // Set default Phone Code for India
+          const indiaCode = mappedCodes.find(
+            (c) => c.country === "IN" || c.country === "India"
+          );
+          if (indiaCode) {
+            setFormData((prev) => ({
+              ...prev,
+              adminPhoneCode: indiaCode.code,
+              carePhoneCode: indiaCode.code,
+            }));
+          }
+        } catch (e) {
+          console.error("Error parsing ISO codes", e);
+        }
+      }
+
+      // 4. Set Default Country (India)
+      // We look for 'India' in the loaded options to get its ISO code (value)
+      const indiaOption = loadedOptions.find(
+        (opt) => opt.label.toLowerCase() === "india"
+      );
+
+      if (indiaOption) {
+        const indiaIso = indiaOption.value;
+        setFormData((prev) => ({ ...prev, country: indiaIso }));
+        fetchStates(indiaIso);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
+
   // --- Helpers ---
 
   const handleInputChange = (key: string, value: any) => {
@@ -484,12 +546,15 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     }
   };
 
-  const handleCountryChange = (country: string) => {
+  const handleCountryChange = (isoCode: string) => {
     setFormData((prev) => ({
       ...prev,
-      country: country,
-      state: "", // Reset state when country changes
+      country: isoCode, // Value is ISO
+      state: "", // Reset state
     }));
+
+    fetchStates(isoCode); // Fetch states using ISO
+
     if (errors.country) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -620,15 +685,64 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (validateForm()) {
-      // API Call would go here
-      console.log("Submitting Registration:", {
-        ...formData,
-        adminPhoneFull: `${formData.adminPhoneCode} ${formData.adminPhone}`,
-        carePhoneFull: `${formData.carePhoneCode} ${formData.carePhone}`,
-      });
-      alert("Registration Submitted Successfully!");
+      setIsSubmitting(true);
+
+      try {
+        // Find country name from ISO code
+        const selectedCountryOption = countryOptions.find(
+          (opt) => opt.value === formData.country
+        );
+        const countryName = selectedCountryOption
+          ? selectedCountryOption.label
+          : formData.country;
+
+        // Construct payload according to API requirements
+        const payload = {
+          institute_name: formData.instituteName,
+          accreditation_no: formData.accreditationNumber,
+          house_no: formData.doorNo,
+          street_name: formData.street,
+          landmark: formData.landmark,
+          country: countryName,
+          state: formData.state,
+          postcode: formData.pincode,
+          admin_contact_person_name: formData.adminName,
+          // Using just the phone number as per the requested example structure,
+          // but prepending code would be `${formData.adminPhoneCode} ${formData.adminPhone}`
+          admin_contact_person_phone: `${formData.adminPhoneCode} ${formData.adminPhone}`,
+          admin_contact_person_email: formData.adminEmail,
+          customer_care_phone: `${formData.carePhoneCode} ${formData.carePhone}`,
+          customer_care_email: formData.careEmail,
+          license_number: formData.licenseNumber,
+          issuing_authority: formData.issuingAuthority,
+          created_by: "system",
+        };
+
+        const response = await fetch(
+          getUrl(API_CONFIG.ENDPOINTS.CREATE_INSTITUTE),
+          {
+            method: "POST",
+            headers: API_CONFIG.HEADERS,
+            body: JSON.stringify(payload),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to register institute");
+        }
+
+        const responseData = await response.json();
+        console.log("Registration Success:", responseData);
+        setIsSuccess(true);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (error) {
+        console.error("Submission Error:", error);
+        alert("Registration failed. Please try again.");
+      } finally {
+        setIsSubmitting(false);
+      }
     } else {
       // Scroll to first error
       const firstError = document.querySelector(".text-red-500");
@@ -636,9 +750,33 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
     }
   };
 
-  const filteredCourses = AVAILABLE_COURSES.filter((c) =>
+  const filteredCourses = availableCourses.filter((c) =>
     c.toLowerCase().includes(courseSearchTerm.toLowerCase())
   );
+
+  if (isSuccess) {
+    return (
+      <div className="max-w-3xl mx-auto py-16 px-4 animate-in fade-in zoom-in-95 duration-500">
+        <Card className="text-center py-12 border-blue-100 bg-white shadow-xl">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+            <CheckCircle size={40} />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Registration Successful!
+          </h2>
+          <p className="text-lg text-gray-600 max-w-lg mx-auto leading-relaxed mb-8">
+            Your institute register successfully after admin approval u can able
+            to login using your email and password.
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button onClick={() => window.location.reload()}>
+              Register Another Institute
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto pb-12 animate-in fade-in duration-300">
@@ -755,7 +893,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                       label="Country *"
                       value={formData.country}
                       onChange={handleCountryChange}
-                      options={Object.keys(COUNTRIES_DATA)}
+                      options={countryOptions}
                       placeholder="Select Country"
                       error={errors.country}
                     />
@@ -767,14 +905,12 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                       label="State *"
                       value={formData.state}
                       onChange={(val) => handleInputChange("state", val)}
-                      options={
-                        formData.country
-                          ? COUNTRIES_DATA[formData.country] || []
-                          : []
-                      }
+                      options={stateOptions}
                       placeholder={
                         formData.country
-                          ? "Select State"
+                          ? stateOptions.length > 0
+                            ? "Select State"
+                            : "No states / Loading..."
                           : "Select Country First"
                       }
                       disabled={!formData.country}
@@ -843,6 +979,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                 numberValue={formData.adminPhone}
                 onCodeChange={(val) => handleInputChange("adminPhoneCode", val)}
                 onNumberChange={(val) => handleInputChange("adminPhone", val)}
+                phoneCodes={phoneCodes}
                 error={errors.adminPhone}
               />
 
@@ -877,6 +1014,7 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                 numberValue={formData.carePhone}
                 onCodeChange={(val) => handleInputChange("carePhoneCode", val)}
                 onNumberChange={(val) => handleInputChange("carePhone", val)}
+                phoneCodes={phoneCodes}
                 error={errors.carePhone}
               />
 
@@ -981,7 +1119,9 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
                   className="bg-transparent outline-none flex-1 min-w-[120px] px-2 py-1 text-sm"
                   placeholder={
                     formData.selectedCourses.length === 0
-                      ? "Search and select courses..."
+                      ? availableCourses.length > 0
+                        ? "Search and select courses..."
+                        : "Loading courses..."
                       : ""
                   }
                   value={courseSearchTerm}
@@ -1165,11 +1305,22 @@ export const VendorInstituteRegistration: React.FC<Props> = ({ user }) => {
 
           {/* Submit Button */}
           <div className="flex justify-end gap-4 pt-4">
-            <Button variant="outline" className="px-8">
+            <Button variant="outline" className="px-8" disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button className="px-8 py-3 text-lg" onClick={handleSubmit}>
-              Register Institute
+            <Button
+              className="px-8 py-3 text-lg"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={20} />
+                  Submitting...
+                </>
+              ) : (
+                "Register Institute"
+              )}
             </Button>
           </div>
         </div>

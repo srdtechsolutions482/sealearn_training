@@ -33,15 +33,15 @@ export interface CourseMaster {
   code?: string;
   status: "active" | "pending" | "closed" | "suspended";
 
-  instituteName?:string;
-  startDate?:string;
-  endDate?:string;
-  enrolmentCount:number;
-  location?:string;
-  isOnline:boolean;
-  availableSeats:number;
-  bookedSeats:number;
-  totalSeats:number;
+  instituteName?: string;
+  startDate?: string;
+  endDate?: string;
+  enrolmentCount: number;
+  location?: string;
+  isOnline: boolean;
+  availableSeats: number;
+  bookedSeats: number;
+  totalSeats: number;
 }
 
 export interface Course {
@@ -63,7 +63,7 @@ export interface Course {
   entryRequirements?: string;
   courseOverview?: string;
   additionalNotes?: string;
-  image:string
+  image: string;
 }
 
 export interface Vendor {
@@ -88,9 +88,8 @@ export interface Vendor {
   customerCarePhone?: string;
   coursesOffered?: string[];
   documents?: { name: string; type: string; date: string }[];
-  verifiedBy?:string;
-  createdAt?:string;
-
+  verifiedBy?: string;
+  createdAt?: string;
 }
 
 export interface Enrollment {
@@ -105,10 +104,10 @@ export interface Enrollment {
 }
 
 export interface ApprovalAction {
-    instituteId: string;
-    action: 'approve' | 'reject' | 'suspend';
-    comments: string;
-    selectedCourses: string[];
+  instituteId: string;
+  action: "approve" | "reject" | "suspend";
+  comments: string;
+  selectedCourses: string[];
 }
 
 export type ViewState =
@@ -119,9 +118,10 @@ export type ViewState =
   | "login"
   | "register"
   | "settings"
+  | "instituteregistration"
   // Admin Views
   | "admin-dashboard"
-  |"admin-institute-approval"
+  | "admin-institute-approval"
   | "admin-vendors"
   | "admin-courses"
   | "admin-users"
@@ -129,7 +129,6 @@ export type ViewState =
   | "vendor-dashboard"
   | "vendor-courses"
   | "vendor-add-course"
-  | "vendor-institute"
   | "vendor-students"
   // Seafarer Views
   | "seafarer-dashboard"

@@ -8,6 +8,7 @@ import { HomePage } from "./components/public/Home";
 import { LoginPage } from "./components/public/Login";
 import { RegisterPage } from "./components/public/Register";
 import { ContactPage } from "./components/public/Contact";
+import { VendorInstituteRegistration } from "./components/public/InstituteRegistration";
 
 // Admin Imports
 import { AdminDashboard } from "./components/admin/Dashboard";
@@ -21,7 +22,6 @@ import { AdminInstituteApproval } from "./components/admin/AdminInstituteApprova
 import { VendorDashboard } from "./components/vendor/Dashboard";
 import { VendorAddCourse } from "./components/vendor/AddCourse";
 import { VendorCourseManagement } from "./components/vendor/CourseManagement";
-import { VendorInstituteRegistration } from "./components/vendor/InstituteRegistration";
 import { VendorStudentList } from "./components/vendor/StudentList";
 import { VendorProfileSettings } from "./components/vendor/ProfileSettings";
 
@@ -30,8 +30,29 @@ import { SeafarerDashboard } from "./components/seafarer/Dashboard";
 import { SeafarerBrowseCourses } from "./components/seafarer/BrowseCourses";
 import { SeafarerMyLearning } from "./components/seafarer/MyLearning";
 import { SeafarerProfile } from "./components/seafarer/Profile";
+import { Anchor } from "lucide-react";
 
 const App = () => {
+  // 1. Initial State Logic: Hash > LocalStorage > Default
+  const getInitialView = (): ViewState => {
+    // Check hash first for deep linking
+    const hash = window.location.hash.replace(/^#\/?/, "");
+    if (hash) return hash as ViewState;
+
+    // Only persist/restore view for authenticated users
+    // For guests, always default to home on root URL to avoid getting stuck on specific pages
+    try {
+      const savedUser = localStorage.getItem("currentUser");
+      if (savedUser) {
+        const savedView = localStorage.getItem("currentView");
+        if (savedView) return savedView as ViewState;
+      }
+    } catch (e) {}
+
+    return "home";
+  };
+
+  const [currentView, setCurrentView] = useState<ViewState>(getInitialView);
   // Application State
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -41,15 +62,21 @@ const App = () => {
       return null;
     }
   });
-  const [currentView, setCurrentView] = useState<ViewState>(() => {
-    try {
-      const savedView = localStorage.getItem("currentView");
-      return (savedView as ViewState) || "home";
-    } catch (e) {
-      return "home";
-    }
-  });
+
   const [theme, setTheme] = useState("blue");
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, "");
+      if (hash) {
+        setCurrentView(hash as ViewState);
+      } else {
+        setCurrentView("home");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   // Persistence Effects
   useEffect(() => {
@@ -102,6 +129,41 @@ const App = () => {
 
   // View Routing Logic
   const renderView = () => {
+    // 1. Standalone Pages (No PublicHeader)
+    if (!currentUser && currentView === "instituteregistration") {
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+          {/* Dedicated Minimal Header for Registration */}
+          <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
+            <div
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => onNavigate("home")}
+            >
+              <div className="bg-blue-600 text-white p-2 rounded-lg group-hover:rotate-12 transition-transform">
+                <Anchor size={24} />
+              </div>
+              <span className="font-bold text-2xl text-slate-900 tracking-tight">
+                SeaLearn
+              </span>
+            </div>
+
+            <button
+              onClick={() => navigate("login")}
+              className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              Already have an account? Login
+            </button>
+          </header>
+
+          <main className="flex-grow p-6 md:p-12">
+            <VendorInstituteRegistration onCancel={() => navigate("home")} />
+          </main>
+
+          <Footer />
+        </div>
+      );
+    }
+
     // Public Views
     if (!currentUser) {
       return (
@@ -160,7 +222,7 @@ const App = () => {
         return <AdminDashboard onNavigate={navigate} />;
       case "admin-vendors":
         return <AdminVendorList />;
-      case "admin-institute-approval": 
+      case "admin-institute-approval":
         return <AdminInstituteApproval />;
       case "admin-courses":
         return <AdminCourseList />;
@@ -178,8 +240,7 @@ const App = () => {
         );
       case "vendor-add-course":
         return <VendorAddCourse />;
-      case "vendor-institute":
-        return <VendorInstituteRegistration user={currentUser} />;
+
       case "vendor-students":
         return <VendorStudentList />;
 
