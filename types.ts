@@ -10,7 +10,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  status: "active" | "disabled"; // Added for account management
+  status: "active" | "Inactive"; // Added for account management
   password?: string; // Added for mock auth validation
   avatarUrl?: string;
   phone?: string;

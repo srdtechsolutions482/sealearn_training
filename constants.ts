@@ -957,7 +957,7 @@ export const MOCK_USER_LIST: User[] = [
         name: 'Hector Barbossa',
         email: 'hector@blackpearl.com',
         role: UserRole.SEAFARER,
-        status: 'disabled',
+        status: 'Inactive',
         phone: '+44 7700 900033',
         address: 'Unknown',
         details: { rank: 'Master', nationality: 'Spanish' }
@@ -967,7 +967,7 @@ export const MOCK_USER_LIST: User[] = [
         name: 'Elizabeth Swann',
         email: 'liz@royal.com',
         role: UserRole.SEAFARER,
-        status: 'active',
+        status: 'Inactive',
         phone: '+44 7700 900022',
         address: 'Port Royal',
         details: { rank: 'Pirate King', nationality: 'British' }
