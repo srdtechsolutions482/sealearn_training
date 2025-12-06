@@ -2,41 +2,105 @@ import React, { useState } from "react";
 import { UserRole } from "../../types";
 import { Button, Card, Input } from "../common/UI";
 import { MOCK_USERS } from "../../constants";
-import { AlertCircle, CheckCircle2, Copy } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy, Loader2 } from "lucide-react";
+import { API_CONFIG } from "../../apiconfig";
 
 export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
   const [activeTab, setActiveTab] = useState<"seafarer" | "vendor">("seafarer");
   const [isAdmin, setIsAdmin] = useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
+  // --- Helper for URLs ---
+  const getUrl = (endpoint: string) => {
+    const base = API_CONFIG.BASE_URL.replace(/\/$/, "");
+    const path = endpoint.replace(/^\//, "");
+    return `${base}/${path}`;
+  };
   // Form State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
-    let targetUser;
-    let targetRole: UserRole;
+    try {
+      // 1. Admin Login (Mock)
+      if (isAdmin) {
+        // Simulate network delay for consistency
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-    if (isAdmin) {
-      targetUser = MOCK_USERS.admin;
-      targetRole = UserRole.ADMIN;
-    } else if (activeTab === "vendor") {
-      targetUser = MOCK_USERS.vendor;
-      targetRole = UserRole.VENDOR;
-    } else {
-      targetUser = MOCK_USERS.seafarer;
-      targetRole = UserRole.SEAFARER;
-    }
+        if (
+          email === MOCK_USERS.admin.email &&
+          password === MOCK_USERS.admin.password
+        ) {
+          onLogin(UserRole.ADMIN);
+        } else {
+          setError("Invalid admin credentials");
+        }
+        setIsLoading(false);
+        return;
+      }
 
-    if (email === targetUser.email && password === targetUser.password) {
-      onLogin(targetRole);
-    } else {
-      setError(
-        "Invalid email or password. Please check the demo credentials below."
-      );
+      // 2. Vendor Login (Real API)
+      if (activeTab === "vendor") {
+        try {
+          const url = `${getUrl(API_CONFIG.ENDPOINTS.INSTITUTE_LOGIN)}`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: API_CONFIG.HEADERSURLCENCODE,
+            body: new URLSearchParams({
+              username: email,
+              password: password,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Check for specific API status flags if they exist, otherwise assume HTTP 200 is success
+            if (data && data.status === false) {
+              setError(
+                data.message || "Login failed. Please check your credentials."
+              );
+            } else {
+              // Success - Proceed to Vendor Dashboard
+              onLogin(UserRole.VENDOR);
+            }
+          } else {
+            setError(
+              data?.message || "Login failed. Please check your credentials."
+            );
+          }
+        } catch (apiError) {
+          console.error("Vendor login error:", apiError);
+          setError(
+            "Unable to connect to the login service. Please try again later."
+          );
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      // 3. Seafarer Login (Mock)
+      if (activeTab === "seafarer") {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        if (
+          email === MOCK_USERS.seafarer.email &&
+          password === MOCK_USERS.seafarer.password
+        ) {
+          onLogin(UserRole.SEAFARER);
+        } else {
+          setError("Invalid seafarer credentials");
+        }
+        setIsLoading(false);
+        return;
+      }
+    } catch (err) {
+      console.error(err);
+      setError("An unexpected error occurred during login.");
+      setIsLoading(false);
     }
   };
 
@@ -77,6 +141,7 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
                 setError("");
               }}
               type="button"
+              disabled={isLoading}
             >
               Seafarer
             </button>
@@ -92,13 +157,14 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
                 setError("");
               }}
               type="button"
+              disabled={isLoading}
             >
               Vendor
             </button>
           </div>
 
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm mb-4 border border-red-100">
+            <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm mb-4 border border-red-100 animate-in fade-in slide-in-from-top-2">
               <AlertCircle size={16} />
               {error}
             </div>
@@ -106,10 +172,19 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
-              label="Email Address"
-              placeholder="you@example.com"
+              label={
+                activeTab === "vendor" && !isAdmin
+                  ? "Username / Email"
+                  : "Email Address"
+              }
+              placeholder={
+                activeTab === "vendor" && !isAdmin
+                  ? "Enter username"
+                  : "you@example.com"
+              }
               value={email}
               onChange={(e: any) => setEmail(e.target.value)}
+              disabled={isLoading}
             />
             <Input
               label="Password"
@@ -117,6 +192,7 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
               placeholder="••••••••"
               value={password}
               onChange={(e: any) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
 
             <div className="flex items-center justify-between">
@@ -129,6 +205,7 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
                     setIsAdmin(e.target.checked);
                     setError("");
                   }}
+                  disabled={isLoading}
                 />
                 <span className="text-gray-600">Login as Admin (Demo)</span>
               </label>
@@ -137,13 +214,21 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
               </a>
             </div>
 
-            <Button type="submit" className="w-full">
-              Login as{" "}
-              {isAdmin
-                ? "Admin"
-                : activeTab === "seafarer"
-                ? "Seafarer"
-                : "Vendor"}
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="animate-spin" size={20} />
+                  Verifying...
+                </div>
+              ) : (
+                `Login as ${
+                  isAdmin
+                    ? "Admin"
+                    : activeTab === "seafarer"
+                    ? "Seafarer"
+                    : "Vendor"
+                }`
+              )}
             </Button>
           </form>
         </Card>
@@ -162,8 +247,10 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
             <div className="space-y-3">
               {/* Seafarer Creds */}
               <div
-                onClick={() => fillCredentials("seafarer")}
-                className="bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group"
+                onClick={() => !isLoading && fillCredentials("seafarer")}
+                className={`bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group ${
+                  isLoading ? "opacity-50 pointer-events-none" : ""
+                }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-sm text-gray-800">
@@ -192,8 +279,10 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
 
               {/* Vendor Creds */}
               <div
-                onClick={() => fillCredentials("vendor")}
-                className="bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group"
+                onClick={() => !isLoading && fillCredentials("vendor")}
+                className={`bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group ${
+                  isLoading ? "opacity-50 pointer-events-none" : ""
+                }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-sm text-gray-800">
@@ -222,8 +311,10 @@ export const LoginPage = ({ onLogin }: { onLogin: (r: UserRole) => void }) => {
 
               {/* Admin Creds */}
               <div
-                onClick={() => fillCredentials("admin")}
-                className="bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group"
+                onClick={() => !isLoading && fillCredentials("admin")}
+                className={`bg-white p-3 rounded-lg border border-blue-100 cursor-pointer hover:shadow-md transition-all group ${
+                  isLoading ? "opacity-50 pointer-events-none" : ""
+                }`}
               >
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-bold text-sm text-gray-800">
