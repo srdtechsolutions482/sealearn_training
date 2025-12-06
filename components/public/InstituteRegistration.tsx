@@ -26,8 +26,9 @@ interface ApiCourse {
 interface ApiCountry {
   id: number;
   name: string;
-  iso?: string; // Specific requirement
-  sortname?: string; // Fallback
+  iso: string;
+  phone_code: string;
+  sortname?: string;
 }
 
 interface ApiState {
@@ -35,17 +36,14 @@ interface ApiState {
   name: string;
 }
 
-interface ApiIsoCode {
-  id?: number;
-  name: string;
-  iso?: string;
-  nicename?: string;
-  phonecode: number | string;
-}
-
+// Updated Phone Option Interface
 interface PhoneCodeOption {
-  code: string;
-  country: string;
+  id: number;
+  value: number; // ID is the value
+  label: string; // Visible text in dropdown: "ISO + Phone Code" (e.g., "IN +91")
+  code: string; // The actual code string (e.g., "+91") for display in collapsed state
+  countryName: string;
+  iso: string; // Helper for auto-selection
 }
 
 interface DropdownOption {
@@ -205,34 +203,39 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   );
 };
 
-// --- Phone Input Component ---
+// --- Updated Phone Input Component (ID based) ---
 interface PhoneInputProps {
   label: string;
-  codeValue: string;
+  selectedId: number; // Expecting the Country ID as value
   numberValue: string;
-  onCodeChange: (val: string) => void;
+  onIdChange: (val: number) => void;
   onNumberChange: (val: string) => void;
   phoneCodes: PhoneCodeOption[];
   error?: string;
+  readOnlyCode?: boolean;
 }
 
 const PhoneInput: React.FC<PhoneInputProps> = ({
   label,
-  codeValue,
+  selectedId,
   numberValue,
-  onCodeChange,
+  onIdChange,
   onNumberChange,
   phoneCodes,
   error,
+  readOnlyCode = false,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Find the currently selected option
+  const selectedOption = phoneCodes.find((p) => p.value === selectedId);
+
   const filteredCodes = phoneCodes.filter(
     (c) =>
-      c.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.code.includes(searchTerm)
+      c.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.countryName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
@@ -249,8 +252,8 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleCodeSelect = (code: string) => {
-    onCodeChange(code);
+  const handleIdSelect = (id: number) => {
+    onIdChange(id);
     setIsDropdownOpen(false);
     setSearchTerm("");
   };
@@ -275,28 +278,41 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
       </label>
       <div className="flex gap-2" ref={dropdownRef}>
         {/* Searchable Code Dropdown */}
-        <div className="relative w-[110px] flex-shrink-0">
+        <div className="relative w-[130px] flex-shrink-0">
           <div
-            className={`w-full px-3 py-3 bg-slate-50 border rounded-xl outline-none flex justify-between items-center cursor-pointer transition-all hover:border-blue-300 ${
+            className={`w-full px-3 py-3 bg-slate-50 border rounded-xl outline-none flex justify-between items-center transition-all 
+            ${
+              readOnlyCode
+                ? "cursor-default bg-slate-100"
+                : "cursor-pointer hover:border-blue-300"
+            }
+            ${
               isDropdownOpen
                 ? "ring-2 ring-blue-500 border-transparent"
                 : "border-slate-200"
             }`}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            onClick={() => !readOnlyCode && setIsDropdownOpen(!isDropdownOpen)}
           >
-            <span className="text-slate-800 font-medium truncate">
-              {codeValue}
-            </span>
-            <ChevronDown
-              size={14}
-              className={`text-gray-500 transition-transform ${
-                isDropdownOpen ? "rotate-180" : ""
+            {/* Display code (e.g., +91) when collapsed, or default if nothing selected */}
+            <span
+              className={`font-medium truncate ${
+                readOnlyCode ? "text-slate-500" : "text-slate-800"
               }`}
-            />
+            >
+              {selectedOption ? selectedOption.code : "+ --"}
+            </span>
+            {!readOnlyCode && (
+              <ChevronDown
+                size={14}
+                className={`text-gray-500 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            )}
           </div>
 
-          {isDropdownOpen && (
-            <div className="absolute z-30 w-[180px] mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100">
+          {isDropdownOpen && !readOnlyCode && (
+            <div className="absolute z-30 w-[200px] mt-2 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-100">
               <div className="p-2 border-b border-gray-100 bg-slate-50">
                 <div className="relative">
                   <Search
@@ -307,7 +323,7 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
                     autoFocus
                     type="text"
                     className="w-full pl-7 pr-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    placeholder="Search code..."
+                    placeholder="Search..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -316,20 +332,19 @@ const PhoneInput: React.FC<PhoneInputProps> = ({
 
               <div className="overflow-y-auto">
                 {filteredCodes.length > 0 ? (
-                  filteredCodes.map((c, i) => (
+                  filteredCodes.map((c) => (
                     <div
-                      key={`${c.code}-${c.country}-${i}`}
+                      key={c.id}
                       className={`px-3 py-2 text-sm cursor-pointer hover:bg-blue-50 flex justify-between items-center ${
-                        c.code === codeValue
+                        c.value === selectedId
                           ? "bg-blue-50 text-blue-700 font-medium"
                           : "text-slate-700"
                       }`}
-                      onClick={() => handleCodeSelect(c.code)}
+                      onClick={() => handleIdSelect(c.value)}
                     >
-                      <span>{c.country}</span>
-                      <span className="text-gray-500 text-xs ml-2">
-                        {c.code}
-                      </span>
+                      {/* Visible text in dropdown: ISO + Code */}
+                      <span>{c.label}</span>
+                      {c.value === selectedId && <CheckCircle size={14} />}
                     </div>
                   ))
                 ) : (
@@ -369,9 +384,7 @@ export const VendorInstituteRegistration: React.FC = () => {
   // Options for Dropdowns
   const [countryOptions, setCountryOptions] = useState<DropdownOption[]>([]);
   const [stateOptions, setStateOptions] = useState<DropdownOption[]>([]);
-  const [phoneCodes, setPhoneCodes] = useState<PhoneCodeOption[]>([
-    { code: "+91", country: "IN" }, // Fallback
-  ]);
+  const [phoneCodes, setPhoneCodes] = useState<PhoneCodeOption[]>([]);
 
   // --- Form State ---
   const [formData, setFormData] = useState({
@@ -386,11 +399,13 @@ export const VendorInstituteRegistration: React.FC = () => {
     pincode: "",
     // Admin Contact
     adminName: "",
-    adminPhoneCode: "+91",
+    adminPhoneCodeId: 0, // Stores ID
     adminPhone: "",
     adminEmail: "",
+    password: "",
+    confirmPassword: "",
     // Customer Care
-    carePhoneCode: "+91",
+    carePhoneCodeId: 0, // Stores ID
     carePhone: "",
     careEmail: "",
     // License
@@ -442,14 +457,12 @@ export const VendorInstituteRegistration: React.FC = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       // Run all initial fetches in parallel
-      const [coursesRes, countriesRes, isoRes] = await Promise.allSettled([
+      const [coursesRes, countriesRes] = await Promise.allSettled([
         fetch(getUrl(API_CONFIG.ENDPOINTS.GET_COURSES), {
           headers: API_CONFIG.HEADERS,
         }),
+        // Fetch Countries from the specific API for Phone Code data
         fetch(getUrl(API_CONFIG.ENDPOINTS.GET_COUNTRIES), {
-          headers: API_CONFIG.HEADERS,
-        }),
-        fetch(getUrl(API_CONFIG.ENDPOINTS.GET_ISO_CODES), {
           headers: API_CONFIG.HEADERS,
         }),
       ]);
@@ -469,64 +482,48 @@ export const VendorInstituteRegistration: React.FC = () => {
       }
 
       // 2. Process Countries
-      let loadedOptions: DropdownOption[] = [];
       if (countriesRes.status === "fulfilled") {
         try {
           const data = await countriesRes.value.json();
           const countries = Array.isArray(data) ? data : data.data || [];
 
-          loadedOptions = countries.map((c: ApiCountry) => ({
+          // Map for Address Dropdown (Value = ISO, Label = Name)
+          const addressOptions = countries.map((c: ApiCountry) => ({
             label: c.name,
-            // Use ISO field if available, fallback to sortname, else fallback to name
-            value: c.iso || c.sortname || c.name,
+            value: c.iso,
           }));
+          setCountryOptions(addressOptions);
 
-          setCountryOptions(loadedOptions);
+          // Map for Phone Dropdown (Value = ID, Label = "ISO + Code")
+          const phoneOptions: PhoneCodeOption[] = countries.map(
+            (c: ApiCountry) => ({
+              id: c.id,
+              value: c.id,
+              label: `${c.iso} ${c.phone_code}`, // Requirement: ISO + phone_code visible text
+              code: c.phone_code,
+              countryName: c.name,
+              iso: c.iso,
+            })
+          );
+          setPhoneCodes(phoneOptions);
+
+          // Set Default to India if available
+          const india = countries.find(
+            (c: ApiCountry) => c.iso === "IN" || c.name === "India"
+          );
+
+          if (india) {
+            setFormData((prev) => ({
+              ...prev,
+              country: india.iso,
+              adminPhoneCodeId: india.id,
+              carePhoneCodeId: india.id,
+            }));
+            fetchStates(india.iso);
+          }
         } catch (e) {
           console.error("Error parsing countries", e);
         }
-      }
-
-      // 3. Process ISO Codes (for Phone only)
-      if (isoRes.status === "fulfilled") {
-        try {
-          const data = await isoRes.value.json();
-          const fetchedIsoCodes = Array.isArray(data) ? data : data.data || [];
-
-          const mappedCodes: PhoneCodeOption[] = fetchedIsoCodes.map(
-            (c: ApiIsoCode) => ({
-              code: `+${c.phonecode}`,
-              country: c.iso || c.nicename || c.name || "Unknown",
-            })
-          );
-          setPhoneCodes(mappedCodes);
-
-          // Set default Phone Code for India
-          const indiaCode = mappedCodes.find(
-            (c) => c.country === "IN" || c.country === "India"
-          );
-          if (indiaCode) {
-            setFormData((prev) => ({
-              ...prev,
-              adminPhoneCode: indiaCode.code,
-              carePhoneCode: indiaCode.code,
-            }));
-          }
-        } catch (e) {
-          console.error("Error parsing ISO codes", e);
-        }
-      }
-
-      // 4. Set Default Country (India)
-      // We look for 'India' in the loaded options to get its ISO code (value)
-      const indiaOption = loadedOptions.find(
-        (opt) => opt.label.toLowerCase() === "india"
-      );
-
-      if (indiaOption) {
-        const indiaIso = indiaOption.value;
-        setFormData((prev) => ({ ...prev, country: indiaIso }));
-        fetchStates(indiaIso);
       }
     };
 
@@ -547,11 +544,27 @@ export const VendorInstituteRegistration: React.FC = () => {
   };
 
   const handleCountryChange = (isoCode: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      country: isoCode, // Value is ISO
-      state: "", // Reset state
-    }));
+    // 1. Update Address Country
+    setFormData((prev) => {
+      // 2. Auto-select Phone Code based on Country Selection
+      // Find the phone code option with the same ISO
+      const matchedPhoneOption = phoneCodes.find((p) => p.iso === isoCode);
+
+      return {
+        ...prev,
+        country: isoCode, // Value is ISO
+        state: "", // Reset state
+        // If match found, update phone codes; otherwise keep existing or reset?
+        // Keeping existing prevents annoying resets if country doesn't match perfectly,
+        // but updating is usually desired behavior.
+        adminPhoneCodeId: matchedPhoneOption
+          ? matchedPhoneOption.id
+          : prev.adminPhoneCodeId,
+        carePhoneCodeId: matchedPhoneOption
+          ? matchedPhoneOption.id
+          : prev.carePhoneCodeId,
+      };
+    });
 
     fetchStates(isoCode); // Fetch states using ISO
 
@@ -648,6 +661,29 @@ export const VendorInstituteRegistration: React.FC = () => {
       newErrors.adminEmail = "Invalid email format";
     }
 
+    // Password Validation
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else {
+      if (formData.password.length < 8) {
+        newErrors.password = "Must be at least 8 characters";
+      } else if (!/[A-Z]/.test(formData.password)) {
+        newErrors.password = "Must contain an uppercase letter";
+      } else if (!/[a-z]/.test(formData.password)) {
+        newErrors.password = "Must contain a lowercase letter";
+      } else if (!/[0-9]/.test(formData.password)) {
+        newErrors.password = "Must contain a number";
+      } else if (!/[!@#$%^&*]/.test(formData.password)) {
+        newErrors.password = "Must contain a special character (!@#$%^&*)";
+      }
+    }
+
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = "Confirm Password is required";
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
     // Customer Care
     if (!formData.carePhone.trim())
       newErrors.carePhone = "Care Phone is required";
@@ -698,6 +734,14 @@ export const VendorInstituteRegistration: React.FC = () => {
           ? selectedCountryOption.label
           : formData.country;
 
+        // Resolve IDs to Code Strings for Payload
+        const adminCodeStr =
+          phoneCodes.find((p) => p.value === formData.adminPhoneCodeId)?.code ||
+          "";
+        const careCodeStr =
+          phoneCodes.find((p) => p.value === formData.carePhoneCodeId)?.code ||
+          "";
+
         // Construct payload according to API requirements
         const payload = {
           institute_name: formData.instituteName,
@@ -709,11 +753,11 @@ export const VendorInstituteRegistration: React.FC = () => {
           state: formData.state,
           postcode: formData.pincode,
           admin_contact_person_name: formData.adminName,
-          // Using just the phone number as per the requested example structure,
-          // but prepending code would be `${formData.adminPhoneCode} ${formData.adminPhone}`
-          admin_contact_person_phone: `${formData.adminPhoneCode} ${formData.adminPhone}`,
+          // Format: "+91 9876543210"
+          admin_contact_person_phone: `${adminCodeStr} ${formData.adminPhone}`,
           admin_contact_person_email: formData.adminEmail,
-          customer_care_phone: `${formData.carePhoneCode} ${formData.carePhone}`,
+          password: formData.password,
+          customer_care_phone: `${careCodeStr} ${formData.carePhone}`,
           customer_care_email: formData.careEmail,
           license_number: formData.licenseNumber,
           issuing_authority: formData.issuingAuthority,
@@ -811,12 +855,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                 onChange={(e: any) =>
                   handleInputChange("instituteName", e.target.value)
                 }
+                error={errors.instituteName}
               />
-              {errors.instituteName && (
-                <p className="text-red-500 text-xs -mt-3 mb-3">
-                  {errors.instituteName}
-                </p>
-              )}
 
               <Input
                 label="Accreditation Number *"
@@ -825,12 +865,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                 onChange={(e: any) =>
                   handleInputChange("accreditationNumber", e.target.value)
                 }
+                error={errors.accreditationNumber}
               />
-              {errors.accreditationNumber && (
-                <p className="text-red-500 text-xs -mt-3 mb-3">
-                  {errors.accreditationNumber}
-                </p>
-              )}
 
               {/* Address Details with Labels and Dropdowns */}
               <div className="pt-2">
@@ -966,21 +1002,18 @@ export const VendorInstituteRegistration: React.FC = () => {
                 onChange={(e: any) =>
                   handleInputChange("adminName", e.target.value)
                 }
+                error={errors.adminName}
               />
-              {errors.adminName && (
-                <p className="text-red-500 text-xs -mt-3 mb-3">
-                  {errors.adminName}
-                </p>
-              )}
 
               <PhoneInput
                 label="Phone Number *"
-                codeValue={formData.adminPhoneCode}
+                selectedId={formData.adminPhoneCodeId}
                 numberValue={formData.adminPhone}
-                onCodeChange={(val) => handleInputChange("adminPhoneCode", val)}
+                onIdChange={(val) => handleInputChange("adminPhoneCodeId", val)}
                 onNumberChange={(val) => handleInputChange("adminPhone", val)}
                 phoneCodes={phoneCodes}
                 error={errors.adminPhone}
+                readOnlyCode={true}
               />
 
               <Input
@@ -990,12 +1023,41 @@ export const VendorInstituteRegistration: React.FC = () => {
                 onChange={(e: any) =>
                   handleInputChange("adminEmail", e.target.value)
                 }
+                error={errors.adminEmail}
               />
-              {errors.adminEmail && (
-                <p className="text-red-500 text-xs -mt-3 mb-3">
-                  {errors.adminEmail}
-                </p>
-              )}
+
+              {/* Password Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Input
+                    label="Password *"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e: any) =>
+                      handleInputChange("password", e.target.value)
+                    }
+                    placeholder="Enter strong password"
+                    error={errors.password}
+                  />
+                  {!errors.password && (
+                    <p className="text-xs text-gray-400 mt-1.5">
+                      Min 8 chars, mixed case, numbers & symbols.
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Input
+                    label="Confirm Password *"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e: any) =>
+                      handleInputChange("confirmPassword", e.target.value)
+                    }
+                    placeholder="Re-enter password"
+                    error={errors.confirmPassword}
+                  />
+                </div>
+              </div>
             </div>
           </Card>
 
@@ -1010,12 +1072,13 @@ export const VendorInstituteRegistration: React.FC = () => {
             <div className="space-y-4">
               <PhoneInput
                 label="Phone Number *"
-                codeValue={formData.carePhoneCode}
+                selectedId={formData.carePhoneCodeId}
                 numberValue={formData.carePhone}
-                onCodeChange={(val) => handleInputChange("carePhoneCode", val)}
+                onIdChange={(val) => handleInputChange("carePhoneCodeId", val)}
                 onNumberChange={(val) => handleInputChange("carePhone", val)}
                 phoneCodes={phoneCodes}
                 error={errors.carePhone}
+                readOnlyCode={true}
               />
 
               <Input
@@ -1025,12 +1088,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                 onChange={(e: any) =>
                   handleInputChange("careEmail", e.target.value)
                 }
+                error={errors.careEmail}
               />
-              {errors.careEmail && (
-                <p className="text-red-500 text-xs -mt-3 mb-3">
-                  {errors.careEmail}
-                </p>
-              )}
             </div>
           </Card>
 
@@ -1050,12 +1109,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                   onChange={(e: any) =>
                     handleInputChange("licenseNumber", e.target.value)
                   }
+                  error={errors.licenseNumber}
                 />
-                {errors.licenseNumber && (
-                  <p className="text-red-500 text-xs -mt-3 mb-3">
-                    {errors.licenseNumber}
-                  </p>
-                )}
               </div>
               <div>
                 <Input
@@ -1064,12 +1119,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                   onChange={(e: any) =>
                     handleInputChange("issuingAuthority", e.target.value)
                   }
+                  error={errors.issuingAuthority}
                 />
-                {errors.issuingAuthority && (
-                  <p className="text-red-500 text-xs -mt-3 mb-3">
-                    {errors.issuingAuthority}
-                  </p>
-                )}
               </div>
             </div>
           </Card>
@@ -1189,12 +1240,8 @@ export const VendorInstituteRegistration: React.FC = () => {
                   onChange={(e: any) =>
                     handleInputChange("otherCourse", e.target.value)
                   }
+                  error={errors.otherCourse}
                 />
-                {errors.otherCourse && (
-                  <p className="text-red-500 text-xs -mt-3 mb-3">
-                    {errors.otherCourse}
-                  </p>
-                )}
               </div>
             )}
           </Card>
