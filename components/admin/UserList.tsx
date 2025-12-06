@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DataTable, Column } from '../common/DataTable';
 import { Button, Card, Modal } from '../common/UI';
 import { MOCK_USER_LIST } from '../../constants';
@@ -24,17 +24,37 @@ export const AdminUserList = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string>('all');
 
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage] = useState(10);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus]);
+
     const filteredUsers = useMemo(() => {
         return users.filter(user => {
-            const statusMatch = filterStatus === 'all' || user.status === filterStatus;
-            return statusMatch;
+            if (filterStatus === 'all') return true;
+            if (filterStatus === 'active' && user.status === 'active') return true;
+            if (filterStatus === 'Inactive' && user.status === 'Inactive') return true;
+            return false;
         });
     }, [users, filterStatus]);
+
+    // Pagination logic
+    const paginatedUsers = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return filteredUsers.slice(startIndex, endIndex);
+    }, [filteredUsers, currentPage, rowsPerPage]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
 
     const handleToggleStatus = (id: string) => {
         setUsers(prev => prev.map(u => {
             if (u.id === id) {
-                return { ...u, status: u.status === 'active' ? 'inactive' : 'active' };
+                return { ...u, status: u.status === 'active' ? 'Inactive' : 'active' };
             }
             return u;
         }));
@@ -107,11 +127,9 @@ export const AdminUserList = () => {
         <>
             <DataTable<User>
                 title="Seafarer Management"
-                data={filteredUsers}
+                data={paginatedUsers}
                 columns={columns}
                 searchKeys={['name', 'email', 'phone']}
-                // addLabel="Add Seafarer (Disabled)" 
-                //onAdd={() => alert("Manual seafarer creation is not enabled in this demo.")}
                 filterOptions={
                     <div className="relative">
                         <Button 
@@ -126,7 +144,7 @@ export const AdminUserList = () => {
                                 <div className="flex justify-between items-center mb-3">
                                     <h4 className="font-bold text-sm text-gray-700">Filter Seafarers</h4>
                                     <button 
-                                        onClick={() => { setFilterStatus('all'); }} 
+                                        onClick={() => setFilterStatus('all')} 
                                         className="text-xs text-blue-600 hover:underline"
                                     >
                                         Reset
@@ -143,7 +161,7 @@ export const AdminUserList = () => {
                                         >
                                             <option value="all">All Statuses</option>
                                             <option value="active">Active</option>
-                                            <option value="inactive">Inactive</option>
+                                            <option value="Inactive">Inactive</option>
                                         </select>
                                     </div>
                                 </div>
@@ -151,40 +169,47 @@ export const AdminUserList = () => {
                         )}
                     </div>
                 }
-                // actions={(user) => (
-                //     <div className="flex justify-end gap-2">
-                //         <button 
-                //             onClick={() => handleView(user)}
-                //             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                //             title="View Profile"
-                //         >
-                //             <Edit size={18} />
-                //         </button>
-                        
-                //         <button 
-                //             onClick={() => handleToggleStatus(user.id)}
-                //             className={`p-1.5 rounded-lg transition-colors ${
-                //                 user.status === 'active' 
-                //                     ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' 
-                //                     : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
-                //             }`}
-                //             title={user.status === 'active' ? 'Deactivate' : 'Activate'}
-                //         >
-                //             {user.status === 'active' ? <Lock size={18} /> : <Unlock size={18} />}
-                //         </button>
-                //     </div>
-                // )}
-            /> 
+            />
 
-            {/* User Details Modal - Kept existing UI */}
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-lg">
+                <div className="text-sm text-gray-700">
+                    Showing {(filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1)}–
+                    {Math.min(currentPage * rowsPerPage, filteredUsers.length)} of {filteredUsers.length} seafarers
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    >
+                        Previous
+                    </Button>
+                    <span className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border rounded-md">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+
+            {/* User Details Modal */}
             <Modal
                 isOpen={isDetailsOpen}
                 onClose={() => setIsDetailsOpen(false)}
                 title="Seafarer Profile Details"
             >
                 {selectedUser && (
-                    <div className="space-y-6">
-                        {/* Existing modal content unchanged */}
+                    <div className="space-y-6 max-h-[80vh] overflow-y-auto">
+                        {/* Modal content remains exactly the same */}
                         <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
                             <img 
                                 src={selectedUser.avatarUrl || `https://ui-avatars.com/api/?name=${selectedUser.name}`} 
@@ -276,4 +301,3 @@ export const AdminUserList = () => {
         </>
     );
 };
-

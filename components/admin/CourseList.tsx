@@ -1,266 +1,4 @@
-
-// import React, { useState, useMemo } from 'react';
-// import { DataTable, Column } from '../common/DataTable';
-// import { MOCK_COURSE_MASTERS } from '../../constants';
-// import { CourseMaster } from '../../types';
-// import { Button, Modal, Input } from '../common/UI';
-// import { Edit, Eye, Filter, Plus, CheckCircle, XCircle } from 'lucide-react';
-
-// // --- Sub-components ---
-
-// const CourseMasterForm = ({ initialData, onSave, onCancel }: { initialData?: CourseMaster; onSave: (data: CourseMaster) => void; onCancel: () => void }) => {
-//     const [formData, setFormData] = useState<Partial<CourseMaster>>(initialData || {
-//         title: '',
-//         category: 'Basic',
-//         targetAudience: '',
-//         entryRequirements: '',
-//         courseOverview: '',
-//         additionalNotes: '',
-//         status: 'active',
-//         // Code is auto-generated or hidden if not needed, but good to keep in state
-//         code: ''
-//     });
-
-//     const handleChange = (key: keyof CourseMaster, value: string) => {
-//         setFormData(prev => ({ ...prev, [key]: value }));
-//     };
-
-//     const handleSubmit = (e: React.FormEvent) => {
-//         e.preventDefault();
-//         onSave({
-//             id: initialData?.id || Math.random().toString(36).substr(2, 9),
-//             // Ensure code exists if not provided
-//             code: formData.code || `CRS-${Math.floor(Math.random() * 1000)}`,
-//             ...formData
-//         } as CourseMaster);
-//     };
-
-//     return (
-//         <form onSubmit={handleSubmit} className="space-y-4">
-//             <Input 
-//                 label="Course Title" 
-//                 value={formData.title} 
-//                 onChange={(e: any) => handleChange('title', e.target.value)} 
-//                 placeholder="e.g. Advanced Fire Fighting" 
-//             />
-            
-//             <div className="grid grid-cols-2 gap-4">
-//                 <div>
-//                     <label className="block text-sm font-semibold text-slate-700 mb-2">Category</label>
-//                     <select 
-//                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-//                         value={formData.category}
-//                         onChange={(e) => handleChange('category', e.target.value)}
-//                     >
-//                         <option value="Basic">Basic</option>
-//                         <option value="Advanced">Advanced</option>
-//                         <option value="Simulator">Simulator</option>
-//                         <option value="Refresher">Refresher</option>
-//                     </select>
-//                 </div>
-//                 <Input 
-//                     label="Target Audience" 
-//                     value={formData.targetAudience} 
-//                     onChange={(e: any) => handleChange('targetAudience', e.target.value)} 
-//                     placeholder="e.g. Officers, Ratings"
-//                 />
-//             </div>
-
-//             <div>
-//                  <label className="block text-sm font-semibold text-slate-700 mb-2">Entry Requirements</label>
-//                  <textarea 
-//                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-//                     rows={2}
-//                     placeholder="e.g. Valid Medical Certificate, CDC..."
-//                     value={formData.entryRequirements}
-//                     onChange={(e) => handleChange('entryRequirements', e.target.value)}
-//                  />
-//             </div>
-
-//             <div>
-//                  <label className="block text-sm font-semibold text-slate-700 mb-2">Course Overview</label>
-//                  <textarea 
-//                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-//                     rows={3}
-//                     placeholder="Brief description of the course curriculum..."
-//                     value={formData.courseOverview}
-//                     onChange={(e) => handleChange('courseOverview', e.target.value)}
-//                  />
-//             </div>
-
-//             <div>
-//                  <label className="block text-sm font-semibold text-slate-700 mb-2">Additional Notes</label>
-//                  <textarea 
-//                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-//                     rows={2}
-//                     placeholder="e.g. Bring safety shoes, passport size photos..."
-//                     value={formData.additionalNotes}
-//                     onChange={(e) => handleChange('additionalNotes', e.target.value)}
-//                  />
-//             </div>
-
-//             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-//                 <Button variant="outline" onClick={onCancel}>Cancel</Button>
-//                 <Button type="submit">{initialData ? 'Update Template' : 'Create Template'}</Button>
-//             </div>
-//         </form>
-//     );
-// };
-
-
-// // --- Main Component ---
-
-// export const AdminCourseList = () => {
-//   // Only managing Master Courses now
-//   const [masters, setMasters] = useState<CourseMaster[]>(MOCK_COURSE_MASTERS);
-//   const [isMasterModalOpen, setIsMasterModalOpen] = useState(false);
-//   const [selectedMaster, setSelectedMaster] = useState<CourseMaster | undefined>(undefined);
-
-//   // Filter State
-//   const [isFilterOpen, setIsFilterOpen] = useState(false);
-//   const [filterCategory, setFilterCategory] = useState('all');
-//   const [filterStatus, setFilterStatus] = useState('all');
-
-//   // Filter Logic
-//   const filteredMasters = useMemo(() => {
-//       return masters.filter(master => {
-//           const categoryMatch = filterCategory === 'all' || master.category === filterCategory;
-//           const statusMatch = filterStatus === 'all' || master.status === filterStatus;
-//           return categoryMatch && statusMatch;
-//       });
-//   }, [masters, filterCategory, filterStatus]);
-
-//   // -- Handlers --
-
-//   const handleSaveMaster = (data: CourseMaster) => {
-//       if (selectedMaster) {
-//           setMasters(prev => prev.map(m => m.id === data.id ? data : m));
-//       } else {
-//           setMasters(prev => [...prev, data]);
-//       }
-//       setIsMasterModalOpen(false);
-//       setSelectedMaster(undefined);
-//   };
-
-//   const handleEditMaster = (master: CourseMaster) => {
-//       setSelectedMaster(master);
-//       setIsMasterModalOpen(true);
-//   };
-
-//   // -- Columns --
-
-//   const masterColumns: Column<CourseMaster>[] = [
-//       { key: 'title', header: 'Course Template', sortable: true, render: (m) => (
-//           <div>
-//               <p className="font-medium text-gray-900">{m.title}</p>
-//               <p className="text-xs text-gray-500">{m.code || 'NO-CODE'}</p>
-//           </div>
-//       )},
-//       { key: 'category', header: 'Category', sortable: true },
-//       { key: 'targetAudience', header: 'Audience', sortable: true },
-//       { key: 'status', header: 'Status', sortable: true, render: (m) => (
-//           <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${m.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>{m.status}</span>
-//       )}
-//   ];
-
-//   return (
-//     <div className="space-y-6">
-//         <div className="flex justify-between items-center">
-//             <h2 className="text-2xl font-bold text-gray-800">Course Management</h2>
-//         </div>
-
-//         <DataTable<CourseMaster>
-//             title="Course Templates"
-//             data={filteredMasters}
-//             columns={masterColumns}
-//             searchKeys={['title', 'category']}
-//             onAdd={() => { setSelectedMaster(undefined); setIsMasterModalOpen(true); }}
-//             addLabel="Create New Template"
-//             filterOptions={
-//                 <div className="relative">
-//                     <Button 
-//                         variant={isFilterOpen ? 'primary' : 'outline'} 
-//                         className="px-3"
-//                         onClick={() => setIsFilterOpen(!isFilterOpen)}
-//                     >
-//                         <Filter size={18} />
-//                     </Button>
-//                     {isFilterOpen && (
-//                         <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
-//                             <div className="flex justify-between items-center mb-3">
-//                                 <h4 className="font-bold text-sm text-gray-700">Filter Templates</h4>
-//                                 <button 
-//                                     onClick={() => { setFilterCategory('all'); setFilterStatus('all'); }} 
-//                                     className="text-xs text-blue-600 hover:underline"
-//                                 >
-//                                     Reset
-//                                 </button>
-//                             </div>
-                            
-//                             <div className="space-y-4">
-//                                 <div>
-//                                     <label className="block text-xs font-semibold text-gray-500 mb-1">Category</label>
-//                                     <select 
-//                                         className="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-500 bg-gray-50"
-//                                         value={filterCategory}
-//                                         onChange={(e) => setFilterCategory(e.target.value)}
-//                                     >
-//                                         <option value="all">All Categories</option>
-//                                         <option value="Basic">Basic</option>
-//                                         <option value="Advanced">Advanced</option>
-//                                         <option value="Simulator">Simulator</option>
-//                                         <option value="Refresher">Refresher</option>
-//                                     </select>
-//                                 </div>
-
-//                                 <div>
-//                                     <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
-//                                     <select 
-//                                         className="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-500 bg-gray-50"
-//                                         value={filterStatus}
-//                                         onChange={(e) => setFilterStatus(e.target.value)}
-//                                     >
-//                                         <option value="all">All Statuses</option>
-//                                         <option value="active">Active</option>
-//                                         <option value="archived">Archived</option>
-//                                     </select>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     )}
-//                 </div>
-//             }
-//             actions={(master) => (
-//                 <div className="flex justify-end gap-2">
-//                     <button 
-//                         onClick={() => handleEditMaster(master)} 
-//                         className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-//                         title="Edit Template"
-//                     >
-//                         <Edit size={18} />
-//                     </button>
-//                 </div>
-//             )}
-//         />
-
-//         {/* Master Modal */}
-//         <Modal 
-//             isOpen={isMasterModalOpen} 
-//             onClose={() => setIsMasterModalOpen(false)}
-//             title={selectedMaster ? "Edit Course Template" : "New Course Template"}
-//         >
-//             <CourseMasterForm 
-//                 initialData={selectedMaster} 
-//                 onSave={handleSaveMaster}
-//                 onCancel={() => setIsMasterModalOpen(false)}
-//             />
-//         </Modal>
-//     </div>
-//   );
-// };
-
-
-import React, { useState, useMemo, ChangeEvent } from 'react';
+import React, { useState, useMemo, useEffect, ChangeEvent } from 'react';
 import { DataTable, Column } from '../common/DataTable';
 import { MOCK_COURSE_MASTERS } from '../../constants';
 import { CourseMaster } from '../../types';
@@ -272,9 +10,6 @@ import {
 } from 'lucide-react';
 import { downloadSampleCourseExcel } from './utils/excelDownload.ts';
 import {VendorAddCourse} from "../vendor/AddCourse"
-// import { useNavigate } from 'react-router-dom';
-
-
 
 interface CourseAction {
     courseId: string;
@@ -285,9 +20,6 @@ interface CourseAction {
 type CourseMode = 'online' | 'inperson';
 
 export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => void }) => {
-
-    // const navigate = useNavigate();
-
     const [courses, setCourses] = useState<CourseMaster[]>(MOCK_COURSE_MASTERS);
     const [selectedCourse, setSelectedCourse] = useState<CourseMaster | null>(null);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -295,7 +27,6 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
     const [selectedAction, setSelectedAction] = useState<'approve' | 'reject' | 'suspend'>('approve');
 
     const [courseFormErrors, setCourseFormErrors] = useState<Record<string, string>>({});
-
 
     // New Course modal
     const [isAddCourseOpen, setIsAddCourseOpen] = useState(false);
@@ -324,18 +55,38 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
     const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
     const [bulkFile, setBulkFile] = useState<File | null>(null);
 
-    // Filter State
+    // Filter State - REMOVED institute filter as requested
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [filterStatus, setFilterStatus] = useState<string>('all');
-    const [filterInstitute, setFilterInstitute] = useState<string>('all');
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage] = useState(10);
+
+    // Reset to first page when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [filterStatus]);
 
     const filteredCourses = useMemo(() => {
         return courses.filter(course => {
-            const statusMatch = filterStatus === 'all' || course.status === filterStatus;
-            const instituteMatch = filterInstitute === 'all' || course.instituteName === filterInstitute;
-            return statusMatch && instituteMatch;
+            if (filterStatus === 'all') return true;
+            if (filterStatus === 'active' && course.status === 'active') return true;
+            if (filterStatus === 'pending' && course.status === 'pending') return true;
+            if (filterStatus === 'closed' && course.status === 'closed') return true;
+            if (filterStatus === 'suspended' && course.status === 'suspended') return true;
+            return false;
         });
-    }, [courses, filterStatus, filterInstitute]);
+    }, [courses, filterStatus]);
+
+    // Pagination logic
+    const paginatedCourses = useMemo(() => {
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        return filteredCourses.slice(startIndex, endIndex);
+    }, [filteredCourses, currentPage, rowsPerPage]);
+
+    const totalPages = Math.max(1, Math.ceil(filteredCourses.length / rowsPerPage));
 
     const handleCourseAction = (course: CourseMaster) => {
         setSelectedCourse(course);
@@ -443,43 +194,48 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
             header: 'Enrolment Count', 
             sortable: true,
             render: (c) => (
-                <div className="text-right">
-                    <span className="text-2xl font-bold text-gray-900">{c.enrolmentCount || 0}</span>
+                <div className="text-center"> {/* CENTERED - moved from text-right */}
+                    <span className="text-2xl font-bold text-gray-900 block">{c.enrolmentCount || 0}</span>
                     <div className="text-xs text-gray-500">enrolled</div>
                 </div>
             )
         },
         { 
-    key: 'location', 
-    header: 'Location', 
-    sortable: true,
-    render: (c) => (
-        <div className="w-[280px]"> {/* Fixed width for consistent column */}
-            <div className="flex items-start gap-2 text-sm text-gray-700">
-                <MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />
-                <span 
-                    className="break-all leading-relaxed max-h-[60px] overflow-hidden hover:overflow-visible hover:max-h-none" 
-                    title={c.location}
-                >
-                    {c.location || 'N/A'}
-                </span>
-            </div>
-        </div>
-    )
-}
-,
+            key: 'location', 
+            header: 'Location', 
+            sortable: true,
+            render: (c) => (
+                <div className="w-[320px]"> {/* INCREASED WIDTH for better visibility */}
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                        <MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                        <span 
+                            className="break-words leading-relaxed max-w-full line-clamp-3 hover:line-clamp-none" 
+                            title={c.location}
+                        >
+                            {c.location || 'N/A'}
+                        </span>
+                    </div>
+                </div>
+            )
+        },
         { 
             key: 'batchInfo', 
             header: 'Batch Info', 
             sortable: false,
             render: (c) => (
-                <div className="text-sm">
+                <div className="text-sm space-y-1">
                     {c.isOnline ? (
-                        <span className="text-gray-900 font-medium">{c.enrolmentCount || 0} enrolled</span>
+                        <div className="text-center">
+                            <span className="text-lg font-bold text-blue-600 block">{c.enrolmentCount || 0}</span>
+                            <span className="text-xs text-gray-500 bg-blue-50 px-2 py-0.5 rounded-full">Online</span>
+                        </div>
                     ) : (
-                        <span className="text-gray-900">
-                            {c.availableSeats} ({c.bookedSeats} vs {c.totalSeats})
-                        </span>
+                        <div className="text-center">
+                            <span className="text-sm font-semibold text-gray-900">
+                                {c.availableSeats} ({c.bookedSeats} vs {c.totalSeats})
+                            </span>
+                            <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full block mt-1">In-person</span>
+                        </div>
                     )}
                 </div>
             )
@@ -515,20 +271,19 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                             <Upload size={18} className="mr-2" /> Bulk Upload
                         </Button>
                         <a
-                        onClick={downloadSampleCourseExcel}
-                        className="
-                            inline-flex items-center gap-2 
-                            text-sm font-medium 
-                            text-blue-600 hover:text-blue-800 
-                            underline hover:no-underline
-                            transition-colors duration-200
-                            cursor-pointer
-                        "
-                    >
-                        <Download size={16} className="opacity-80 group-hover:opacity-100" />
-                        Download Sample Excel
-                    </a>
-
+                            onClick={downloadSampleCourseExcel}
+                            className="
+                                inline-flex items-center gap-2 
+                                text-sm font-medium 
+                                text-blue-600 hover:text-blue-800 
+                                underline hover:no-underline
+                                transition-colors duration-200
+                                cursor-pointer
+                            "
+                        >
+                            <Download size={16} className="opacity-80 group-hover:opacity-100" />
+                            Download Sample Excel
+                        </a>
                     </div>
                 </div>
             </div>
@@ -536,10 +291,9 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
             {/* Course Table */}
             <DataTable<CourseMaster>
                 title="Published Courses"
-                data={filteredCourses}
+                data={paginatedCourses}
                 columns={columns}
                 searchKeys={['title', 'instituteName', 'code']}
-                // removed add button as requested
                 filterOptions={
                     <div className="relative">
                         <Button 
@@ -550,18 +304,18 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                             <Filter size={18} />
                         </Button>
                         {isFilterOpen && (
-                            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in zoom-in-95 duration-200">
                                 <div className="flex justify-between items-center mb-3">
                                     <h4 className="font-bold text-sm text-gray-700">Filter Courses</h4>
                                     <button 
-                                        onClick={() => { setFilterStatus('all'); setFilterInstitute('all'); }} 
+                                        onClick={() => setFilterStatus('all')} 
                                         className="text-xs text-blue-600 hover:underline"
                                     >
                                         Reset
                                     </button>
                                 </div>
                                 
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <div>
                                         <label className="block text-xs font-semibold text-gray-500 mb-1">Status</label>
                                         <select 
@@ -574,19 +328,6 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                                             <option value="pending">Pending</option>
                                             <option value="closed">Closed</option>
                                             <option value="suspended">Suspended</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-semibold text-gray-500 mb-1">Institute</label>
-                                        <select 
-                                            className="w-full p-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-blue-500 bg-gray-50"
-                                            value={filterInstitute}
-                                            onChange={(e) => setFilterInstitute(e.target.value)}
-                                        >
-                                            <option value="all">All Institutes</option>
-                                            <option value="Ocean Academy">Ocean Academy</option>
-                                            <option value="Maritime Institute">Maritime Institute</option>
-                                            <option value="SeaTech Training">SeaTech Training</option>
                                         </select>
                                     </div>
                                 </div>
@@ -607,12 +348,43 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                 )}
             />
 
+            {/* Pagination Controls */}
+            <div className="flex items-center justify-between mt-6 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-lg">
+                <div className="text-sm text-gray-700">
+                    Showing {(filteredCourses.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1)}–
+                    {Math.min(currentPage * rowsPerPage, filteredCourses.length)} of {filteredCourses.length} courses
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    >
+                        Previous
+                    </Button>
+                    <span className="px-3 py-1 text-sm font-medium text-gray-700 bg-white border rounded-md">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={currentPage === totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    >
+                        Next
+                    </Button>
+                </div>
+            </div>
+
             {/* Course Action Modal (unchanged) */}
             <Modal
                 isOpen={isActionModalOpen}
                 onClose={() => setIsActionModalOpen(false)}
                 title="Course Action"
             >
+                {/* Modal content remains exactly the same - unchanged */}
                 {selectedCourse && (
                     <div className="space-y-6 max-h-[80vh] overflow-y-auto">
                         <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl border border-purple-100">
@@ -688,13 +460,7 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                 )}
             </Modal>
 
-            {/* New Course Registration Modal */}
-         
-            {/* Put AddCourse component HERE as children */}
-                
-    
-
-            {/* Bulk Upload Modal */}
+            {/* Bulk Upload Modal - unchanged */}
             <Modal
                 isOpen={isBulkModalOpen}
                 onClose={() => setIsBulkModalOpen(false)}
@@ -706,19 +472,19 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                         Please use the sample format for correct column mapping.
                     </p>
                     <a
-                    onClick={downloadSampleCourseExcel}
-                    className="
-                        inline-flex items-center gap-2 
-                        text-sm font-medium 
-                        text-blue-600 hover:text-blue-800 
-                        underline hover:no-underline
-                        transition-colors duration-200
-                        cursor-pointer
-                    "
-                >
-                    <Download size={16} className="opacity-80 group-hover:opacity-100" />
-                    Download Sample Excel
-                </a>
+                        onClick={downloadSampleCourseExcel}
+                        className="
+                            inline-flex items-center gap-2 
+                            text-sm font-medium 
+                            text-blue-600 hover:text-blue-800 
+                            underline hover:no-underline
+                            transition-colors duration-200
+                            cursor-pointer
+                        "
+                    >
+                        <Download size={16} className="opacity-80 group-hover:opacity-100" />
+                        Download Sample Excel
+                    </a>
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -741,7 +507,6 @@ export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => voi
                             variant="secondary"
                             className="flex-1"
                             onClick={() => {
-                                // API call for bulk upload here
                                 setIsBulkModalOpen(false);
                             }}
                             disabled={!bulkFile}
