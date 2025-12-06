@@ -137,7 +137,7 @@ const App = () => {
           <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-50">
             <div
               className="flex items-center gap-3 cursor-pointer group"
-              onClick={() => onNavigate("home")}
+              onClick={() => navigate("home")}
             >
               <div className="bg-blue-600 text-white p-2 rounded-lg group-hover:rotate-12 transition-transform">
                 <Anchor size={24} />
@@ -225,7 +225,7 @@ const App = () => {
       case "admin-institute-approval":
         return <AdminInstituteApproval />;
       case "admin-courses":
-        return <AdminCourseList />;
+        return <AdminCourseList onNavigate={navigate}/>;
       case "admin-users":
         return <AdminUserList />;
 

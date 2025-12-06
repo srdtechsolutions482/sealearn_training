@@ -271,6 +271,9 @@ import {
     Plus, Upload, Edit, Download
 } from 'lucide-react';
 import { downloadSampleCourseExcel } from './utils/excelDownload.ts';
+import {VendorAddCourse} from "../vendor/AddCourse"
+// import { useNavigate } from 'react-router-dom';
+
 
 
 interface CourseAction {
@@ -281,7 +284,10 @@ interface CourseAction {
 
 type CourseMode = 'online' | 'inperson';
 
-export const AdminCourseList = () => {
+export const AdminCourseList = ({ onNavigate }: { onNavigate: (v: string) => void }) => {
+
+    // const navigate = useNavigate();
+
     const [courses, setCourses] = useState<CourseMaster[]>(MOCK_COURSE_MASTERS);
     const [selectedCourse, setSelectedCourse] = useState<CourseMaster | null>(null);
     const [isActionModalOpen, setIsActionModalOpen] = useState(false);
@@ -444,16 +450,24 @@ export const AdminCourseList = () => {
             )
         },
         { 
-            key: 'location', 
-            header: 'Location', 
-            sortable: true,
-            render: (c) => (
-                <div className="flex items-center gap-2 text-sm max-w-[120px] truncate">
-                    <MapPin size={16} className="text-gray-400" />
-                    <span title={c.location}>{c.location}</span>
-                </div>
-            )
-        },
+    key: 'location', 
+    header: 'Location', 
+    sortable: true,
+    render: (c) => (
+        <div className="w-[280px]"> {/* Fixed width for consistent column */}
+            <div className="flex items-start gap-2 text-sm text-gray-700">
+                <MapPin size={16} className="text-gray-400 shrink-0 mt-0.5" />
+                <span 
+                    className="break-all leading-relaxed max-h-[60px] overflow-hidden hover:overflow-visible hover:max-h-none" 
+                    title={c.location}
+                >
+                    {c.location || 'N/A'}
+                </span>
+            </div>
+        </div>
+    )
+}
+,
         { 
             key: 'batchInfo', 
             header: 'Batch Info', 
@@ -493,21 +507,28 @@ export const AdminCourseList = () => {
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold text-gray-800">Course Management</h2>
                 <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setIsAddCourseOpen(true)}>
+                    <Button variant="outline" onClick={() => onNavigate('vendor-add-course')}>
                         <Plus size={18} className="mr-2" /> Course Addition
                     </Button>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" onClick={() => setIsBulkModalOpen(true)}>
                             <Upload size={18} className="mr-2" /> Bulk Upload
                         </Button>
-                        <button
-                            type="button"
-                            className="flex items-center text-xs text-blue-600 hover:text-blue-800 underline"
-                            onClick={downloadSampleCourseExcel}
-                        >
-                            <Download size={14} className="mr-1" />
-                            Download Sample Excel
-                        </button>
+                        <a
+                        onClick={downloadSampleCourseExcel}
+                        className="
+                            inline-flex items-center gap-2 
+                            text-sm font-medium 
+                            text-blue-600 hover:text-blue-800 
+                            underline hover:no-underline
+                            transition-colors duration-200
+                            cursor-pointer
+                        "
+                    >
+                        <Download size={16} className="opacity-80 group-hover:opacity-100" />
+                        Download Sample Excel
+                    </a>
+
                     </div>
                 </div>
             </div>
@@ -668,396 +689,10 @@ export const AdminCourseList = () => {
             </Modal>
 
             {/* New Course Registration Modal */}
-            <Modal
-                isOpen={isAddCourseOpen}
-                onClose={() => setIsAddCourseOpen(false)}
-                title="New Course Registration"
-            >
-                <div className="space-y-5 max-h-[80vh]">
-                    <Card className="p-4 bg-slate-50 border border-slate-100">
-                        <p className="text-xs text-slate-500">
-                            Please fill the following details to register a new course. Fields marked with <span className="text-red-500">*</span> are mandatory.
-                        </p>
-                    </Card>
-
-                    {/* 1. Course Title */}
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Course Title <span className="text-red-500">*</span>
-        </label>
-        <select
-            className={`w-full px-3 py-2 bg-gray-50 border rounded-lg text-sm outline-none focus:border-blue-500 ${
-                courseFormErrors.courseTitle ? 'border-red-500' : 'border-gray-200'
-            }`}
-            value={courseForm.courseTitle}
-            onChange={(e) => {
-                handleCourseFormChange('courseTitle', e.target.value);
-                setCourseFormErrors(prev => ({ ...prev, courseTitle: '' }));
-            }}
-        >
-            <option value="">Select Course</option>
-            <option value="Basic Safety Training">Basic Safety Training</option>
-            <option value="Advanced Fire Fighting">Advanced Fire Fighting</option>
-            <option value="Medical First Aid">Medical First Aid</option>
-            <option value="Others">Others</option>
-        </select>
-        {courseFormErrors.courseTitle && (
-            <p className="text-xs text-red-500 mt-1">⚠️ {courseFormErrors.courseTitle}</p>
-        )}
-    </div>
-    {courseForm.courseTitle === 'Others' && (
-        <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                Specify Course Title (if Others) <span className="text-red-500">*</span>
-            </label>
-            <Input
-                value={courseForm.courseTitleOther}
-                onChange={(e) => {
-                    handleCourseFormChange('courseTitleOther', e.target.value);
-                    setCourseFormErrors(prev => ({ ...prev, courseTitleOther: '' }));
-                }}
-                placeholder="Enter custom course title"
-                className={courseFormErrors.courseTitleOther ? 'border-red-500' : ''}
-            />
-            {courseFormErrors.courseTitleOther && (
-                <p className="text-xs text-red-500 mt-1">⚠️ {courseFormErrors.courseTitleOther}</p>
-            )}
-        </div>
-    )}
-</div>
-
-
-                    {/* 3,4,5,8 Category / Target Audience / Entry Req / Validity */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Category <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.category}
-                                onChange={(e) => handleCourseFormChange('category', e.target.value)}
-                                placeholder="Auto-populated / NAMAC Course List"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Target Audience <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.targetAudience}
-                                onChange={(e) => handleCourseFormChange('targetAudience', e.target.value)}
-                                placeholder="e.g. Officers, Ratings"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Entry Requirement <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                as="textarea"
-                                rows={2}
-                                value={courseForm.entryRequirement}
-                                onChange={(e) => handleCourseFormChange('entryRequirement', e.target.value)}
-                                placeholder="List requirements (students can check-off)"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Validity <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.validity}
-                                onChange={(e) => handleCourseFormChange('validity', e.target.value)}
-                                placeholder="e.g. 5 Years"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 6,7 Course Overview / Additional Notes */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Course Overview <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                            as="textarea"
-                            rows={3}
-                            value={courseForm.courseOverview}
-                            onChange={(e) => handleCourseFormChange('courseOverview', e.target.value)}
-                            placeholder="Brief description of the course curriculum"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Additional Notes <span className="text-red-500">*</span>
-                        </label>
-                        <Input
-                            as="textarea"
-                            rows={2}
-                            value={courseForm.additionalNotes}
-                            onChange={(e) => handleCourseFormChange('additionalNotes', e.target.value)}
-                            placeholder="Additional instructions (e.g. documents, dress code)"
-                        />
-                    </div>
-
-                    {/* 9 Course Mode */}
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Course Mode <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex gap-3">
-                            <Button
-                                variant={courseMode === 'online' ? 'secondary' : 'outline'}
-                                className="flex-1"
-                                onClick={() => handleCourseModeChange('online')}
-                            >
-                                Online
-                            </Button>
-                            <Button
-                                variant={courseMode === 'inperson' ? 'secondary' : 'outline'}
-                                className="flex-1"
-                                onClick={() => handleCourseModeChange('inperson')}
-                            >
-                                In-person
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* 10 Seats per Batch + 11 City */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                No of Seats per Batch <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.seatsPerBatch}
-                                onChange={(e) => handleCourseFormChange('seatsPerBatch', e.target.value)}
-                                placeholder={courseMode === 'online' ? 'Total users (e.g. 250)' : 'e.g. 25'}
-                            />
-                            <p className="text-[11px] text-gray-500 mt-1">
-                                For online: total users enrolled. For in-person: used for available vs total display.
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                City {courseMode === 'inperson' && <span className="text-red-500">*</span>}
-                            </label>
-                            <Input
-                                value={courseForm.city}
-                                onChange={(e) => handleCourseFormChange('city', e.target.value)}
-                                placeholder="City name (custom allowed)"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 12,13,14 Dates & Duration */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Start Date <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                type="date"
-                                value={courseForm.startDate}
-                                onChange={(e) => handleCourseFormChange('startDate', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                End Date <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                type="date"
-                                value={courseForm.endDate}
-                                onChange={(e) => handleCourseFormChange('endDate', e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Duration <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.duration}
-                                onChange={(e) => handleCourseFormChange('duration', e.target.value)}
-                                placeholder="Auto / editable, e.g. 5 days"
-                            />
-                        </div>
-                    </div>
-
-                    {/* 15 Instructor, 16 Fee, 17 Thumbnail */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Instructor Name <span className="text-red-500">*</span>
-                            </label>
-                            <Input
-                                value={courseForm.instructorName}
-                                onChange={(e) => handleCourseFormChange('instructorName', e.target.value)}
-                                placeholder="Instructor full name"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Course Fee <span className="text-red-500">*</span>
-                            </label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={courseForm.courseFee}
-                                    onChange={(e) => handleCourseFormChange('courseFee', e.target.value)}
-                                    placeholder="Amount"
-                                />
-                                <select
-                                    className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-                                    value={courseForm.currency}
-                                    onChange={(e) => handleCourseFormChange('currency', e.target.value)}
-                                >
-                                    <option value="USD">USD</option>
-                                    <option value="INR">INR</option>
-                                    <option value="EUR">EUR</option>
-                                    <option value="AED">AED</option>
-                                </select>
-                            </div>
-                            <p className="text-[11px] text-gray-500 mt-1">
-                                Note: Platform commission percentage will be shown based on admin settings.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-1">
-                            Thumbnail <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png,image/gif"
-                            onChange={(e) => {
-                                const file = e.target.files?.[0] || null;
-                                if (file && file.size > 20 * 1024 * 1024) {
-                                    alert('Max thumbnail size is 20 MB.');
-                                    e.target.value = '';
-                                    handleCourseFormChange('thumbnail', null);
-                                } else {
-                                    handleCourseFormChange('thumbnail', file);
-                                }
-                            }}
-                            className="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                        />
-                        <p className="text-[11px] text-gray-500 mt-1">
-                            Allowed formats: JPEG, JPG, PNG, GIF. Max 20 MB.
-                        </p>
-                    </div>
-
-                    {/* Submit Actions */}
-<div className="flex gap-3 pt-3 border-t border-gray-100">
-    <Button
-        variant="secondary"
-        className="flex-1"
-        onClick={() => {
-            // Validation
-            const errors: Record<string, string> = {};
-
-            if (!courseForm.courseTitle.trim()) {
-                errors.courseTitle = 'Course Title is required';
-            }
-            if (courseForm.courseTitle === 'Others' && !courseForm.courseTitleOther.trim()) {
-                errors.courseTitleOther = 'Please specify the custom course title';
-            }
-            if (!courseForm.category.trim()) {
-                errors.category = 'Category is required';
-            }
-            if (!courseForm.targetAudience.trim()) {
-                errors.targetAudience = 'Target Audience is required';
-            }
-            if (!courseForm.entryRequirement.trim()) {
-                errors.entryRequirement = 'Entry Requirement is required';
-            }
-            if (!courseForm.courseOverview.trim()) {
-                errors.courseOverview = 'Course Overview is required';
-            }
-            if (!courseForm.additionalNotes.trim()) {
-                errors.additionalNotes = 'Additional Notes is required';
-            }
-            if (!courseForm.validity.trim()) {
-                errors.validity = 'Validity is required';
-            }
-            if (!courseForm.seatsPerBatch.trim()) {
-                errors.seatsPerBatch = 'Seats per Batch is required';
-            }
-            if (courseMode === 'inperson' && !courseForm.city.trim()) {
-                errors.city = 'City is required for In-person courses';
-            }
-            if (!courseForm.startDate) {
-                errors.startDate = 'Start Date is required';
-            }
-            if (!courseForm.endDate) {
-                errors.endDate = 'End Date is required';
-            }
-            if (courseForm.startDate && courseForm.endDate && new Date(courseForm.startDate) > new Date(courseForm.endDate)) {
-                errors.dates = 'End Date must be after Start Date';
-            }
-            if (!courseForm.duration.trim()) {
-                errors.duration = 'Duration is required';
-            }
-            if (!courseForm.instructorName.trim()) {
-                errors.instructorName = 'Instructor Name is required';
-            }
-            if (!courseForm.courseFee.trim()) {
-                errors.courseFee = 'Course Fee is required';
-            }
-            if (courseForm.courseFee && isNaN(parseFloat(courseForm.courseFee))) {
-                errors.courseFee = 'Course Fee must be a valid number';
-            }
-            if (!courseForm.thumbnail) {
-                errors.thumbnail = 'Thumbnail is required';
-            }
-
-            setCourseFormErrors(errors);
-
-            // If no errors, save
-            if (Object.keys(errors).length === 0) {
-                alert('✅ Course saved successfully!');
-                setIsAddCourseOpen(false);
-                // Reset form
-                setCourseForm({
-                    courseTitle: '',
-                    courseTitleOther: '',
-                    category: '',
-                    targetAudience: '',
-                    entryRequirement: '',
-                    courseOverview: '',
-                    additionalNotes: '',
-                    validity: '',
-                    seatsPerBatch: '',
-                    city: '',
-                    startDate: '',
-                    endDate: '',
-                    duration: '',
-                    instructorName: '',
-                    courseFee: '',
-                    currency: 'INR',
-                    thumbnail: null,
-                });
-            }
-        }}
-    >
-        Save Course
-    </Button>
-    <Button
-        variant="outline"
-        className="px-6"
-        onClick={() => {
-            setIsAddCourseOpen(false);
-            setCourseFormErrors({});
-        }}
-    >
-        Cancel
-    </Button>
-</div>
-
-                </div>
-            </Modal>
+         
+            {/* Put AddCourse component HERE as children */}
+                
+    
 
             {/* Bulk Upload Modal */}
             <Modal
@@ -1071,12 +706,20 @@ export const AdminCourseList = () => {
                         Please use the sample format for correct column mapping.
                     </p>
                     <a
-                        onClick={downloadSampleCourseExcel}
-                        className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 underline"
-                    >
-                        <Download size={16} className="mr-2" />
-                        Download Sample Excel
-                    </a>
+                    onClick={downloadSampleCourseExcel}
+                    className="
+                        inline-flex items-center gap-2 
+                        text-sm font-medium 
+                        text-blue-600 hover:text-blue-800 
+                        underline hover:no-underline
+                        transition-colors duration-200
+                        cursor-pointer
+                    "
+                >
+                    <Download size={16} className="opacity-80 group-hover:opacity-100" />
+                    Download Sample Excel
+                </a>
+
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                             Upload File <span className="text-red-500">*</span>
