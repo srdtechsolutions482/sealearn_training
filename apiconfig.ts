@@ -13,7 +13,8 @@ export const API_CONFIG = {
     GET_ISO_CODES: "/isocode",
     CREATE_INSTITUTE: "/createinstitutes",
     REGISTER_SEAFARER: "/register",
-    GET_INSTITUTE_DETAILS:"/getinstitutesdetails"
+    GET_INSTITUTE_DETAILS:"/getinstitutesdetails",
+    
   },
 
   // Request headers (optional, can be expanded)

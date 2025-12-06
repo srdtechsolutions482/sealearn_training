@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { DataTable, Column } from '../common/DataTable';
 import { Button, Card, Modal, Input } from '../common/UI';
-import { API_CONFIG } from '../../apiconfig'; // Adjust path
+import { API_CONFIG } from '../../apiconfig'; 
 import { 
     Filter, 
     CheckCircle, 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 
 interface Institute {
+    id: string | number;  // Maps to institute_id
     institute_id: number;
     institute_name: string;
     accreditation_no: string;
@@ -37,6 +38,7 @@ interface Institute {
     updated_by: string | null;
     updated_at: string | null;
     is_approved: number; // 0=pending, 1=approved, 2=rejected, 3=suspended
+
 }
 
 export const AdminInstituteApproval = () => {
@@ -137,7 +139,7 @@ export const AdminInstituteApproval = () => {
         if (!selectedInstitute) return;
 
         try {
-            // Map action to is_approved value
+            // Map action to is_approved value (0,1,2,3)
             const statusMap: Record<string, number> = {
                 approve: 1,
                 reject: 2,
@@ -145,21 +147,27 @@ export const AdminInstituteApproval = () => {
             };
             const newStatus = statusMap[selectedAction];
 
-            // TODO: Call your update API here
-            const response = await fetch(`${API_CONFIG.BASE_URL}/updateinstitutestatue/${selectedInstitute.institute_id}`, {
-                method: 'PUT',
-                headers: API_CONFIG.HEADERS,
-                body: JSON.stringify({
-                    is_approved: newStatus,
-                    comments: comments
-                })
-            });
+            // ✅ FIXED URL - passes correct is_approved value (0,1,2,3)
+            const response = await fetch(
+                `${API_CONFIG.BASE_URL}institutes/${selectedInstitute.institute_id}/approve?is_approved=${newStatus}`, 
+                {
+                    method: 'PUT',
+                    headers: {
+                        ...API_CONFIG.HEADERS,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        is_approved: newStatus,
+                        comments: comments
+                    })
+                }
+            );
 
             if (!response.ok) {
-                throw new Error('Failed to update status');
+                throw new Error(`Failed to update status: ${response.status}`);
             }
 
-            // Refresh data
+            alert('Institute status updated successfully!');
             window.location.reload();
         } catch (err) {
             console.error('Approval action failed:', err);
@@ -255,7 +263,10 @@ export const AdminInstituteApproval = () => {
         <>
             <DataTable<Institute>
                 title="Institute Approval"
-                data={paginatedInstitutes}
+                data={paginatedInstitutes.map((institute: Institute) => ({ 
+        ...institute, 
+        id: institute.institute_id  // ✅ Maps institute_id to required id field
+    }))}
                 columns={columns}
                 searchKeys={['institute_name', 'admin_contact_person_name']}
                 addLabel="No Add Action"
@@ -335,7 +346,7 @@ export const AdminInstituteApproval = () => {
                 </div>
             </div>
 
-            {/* Approval Modal - unchanged */}
+            {/* Approval Modal */}
             <Modal
                 isOpen={isApprovalModalOpen}
                 onClose={() => setIsApprovalModalOpen(false)}
