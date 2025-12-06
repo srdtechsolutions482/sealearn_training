@@ -149,7 +149,7 @@ export const AdminInstituteApproval = () => {
 
             // ✅ FIXED URL - passes correct is_approved value (0,1,2,3)
             const response = await fetch(
-                `${API_CONFIG.BASE_URL}institutes/${selectedInstitute.institute_id}/approve?is_approved=${newStatus}`, 
+                `${API_CONFIG.BASE_URL}/institutes/${selectedInstitute.institute_id}/approve?is_approved=${newStatus}`, 
                 {
                     method: 'PUT',
                     headers: {
