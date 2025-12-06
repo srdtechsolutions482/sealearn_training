@@ -151,29 +151,29 @@ export const AdminUserList = () => {
                         )}
                     </div>
                 }
-                actions={(user) => (
-                    <div className="flex justify-end gap-2">
-                        <button 
-                            onClick={() => handleView(user)}
-                            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View Profile"
-                        >
-                            <Edit size={18} />
-                        </button>
+                // actions={(user) => (
+                //     <div className="flex justify-end gap-2">
+                //         <button 
+                //             onClick={() => handleView(user)}
+                //             className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                //             title="View Profile"
+                //         >
+                //             <Edit size={18} />
+                //         </button>
                         
-                        <button 
-                            onClick={() => handleToggleStatus(user.id)}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                                user.status === 'active' 
-                                    ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' 
-                                    : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
-                            }`}
-                            title={user.status === 'active' ? 'Deactivate' : 'Activate'}
-                        >
-                            {user.status === 'active' ? <Lock size={18} /> : <Unlock size={18} />}
-                        </button>
-                    </div>
-                )}
+                //         <button 
+                //             onClick={() => handleToggleStatus(user.id)}
+                //             className={`p-1.5 rounded-lg transition-colors ${
+                //                 user.status === 'active' 
+                //                     ? 'text-gray-400 hover:text-red-600 hover:bg-red-50' 
+                //                     : 'text-gray-400 hover:text-green-600 hover:bg-green-50'
+                //             }`}
+                //             title={user.status === 'active' ? 'Deactivate' : 'Activate'}
+                //         >
+                //             {user.status === 'active' ? <Lock size={18} /> : <Unlock size={18} />}
+                //         </button>
+                //     </div>
+                // )}
             /> 
 
             {/* User Details Modal - Kept existing UI */}
